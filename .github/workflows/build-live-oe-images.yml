@@ -32,7 +32,6 @@ env:
 
 jobs:
   build_and_push_to_registry:
-    if: ( github.repository == 'openeyes/OpenEyes' || github.repository == 'biskyt/test-action' )
     name: Build and push production images
     runs-on: ubuntu-latest
       
