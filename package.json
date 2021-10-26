@@ -1,0 +1,24 @@
+{
+  "name": "external-action-runner",
+  "version": "1.0.0",
+  "description": "Runs github actions triggered from external workflows",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ToukanLabs/external-action-runner.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ToukanLabs/external-action-runner/issues"
+  },
+  "homepage": "https://github.com/ToukanLabs/external-action-runner#readme",
+  "dependencies": {
+    "@actions/core": "^1.6.0",
+    "@actions/github": "^5.0.0"
+  }
+}

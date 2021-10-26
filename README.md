@@ -1,6 +1,21 @@
-# external-action-runner
-Runs github actions triggered from external workflows
+# Hello world javascript action
 
-Primarily, this is used to run private build actions for free, by using a public repo rather than private. The code can be held in a private repo (which is limited to 3000 minutes), but the action can run in a public repo, where there is no limit of action minutes
+This action prints "Hello World" or "Hello" + the name of a person to greet to the log.
 
-Use a repository_dispatch trigger to receive incoming requests
+## Inputs
+
+## `who-to-greet`
+
+**Required** The name of the person to greet. Default `"World"`.
+
+## Outputs
+
+## `time`
+
+The time we greeted you.
+
+## Example usage
+
+uses: actions/hello-world-javascript-action@v1.1
+with:
+  who-to-greet: 'Mona the Octocat'
