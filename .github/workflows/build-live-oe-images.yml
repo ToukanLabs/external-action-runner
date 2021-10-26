@@ -43,17 +43,19 @@ jobs:
         #        - In which case, "modules" should be specified as a comma separated string, and can include
         #          class namespacing in the format <module>=<class>
         #   - a diffenerent PHP version
-        experimental: [false]
         include:
           - client-suffix: ''
             modules: ''
             php-version: "7.4"
+            experimental: false
           - client-suffix: 'meh'
             modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule::class'
             php-version: "7.4"
+            experimental: false
           - client-suffix: 'wales'
             modules: 'SupCoPhonelog,OphInKowastereo'
             php-version: "7.4"
+            experimental: false
           ## PHP 8 builds are currently experimental, so are allowed to fail
           - client-suffix: ''
             modules: ''
