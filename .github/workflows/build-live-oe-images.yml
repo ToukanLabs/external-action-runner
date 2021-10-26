@@ -1,0 +1,290 @@
+name: Publish OpenEyes LiveDocker images
+
+## Builds deployable images for the OE application.
+## For production scenarios, always try to tag the repo, which will create a tagged image
+## Tags should use semantic versioning (major.minor.patch - e.g, v4.1.0)
+## Note that the following special image tags are created:
+  ## - v<major> (always up-to-date with the latest minor and patch version for the relevant major version)
+  ## - v<major.<minor> (always up-todate with the latest patch version for the relevant minor release)
+##
+## Continuously up-to-date images are also built for the following branches - but these are not recommended for production deployment
+  ## - "master"
+  ## - "main"
+  ## - "develop"
+  ## - "release/*"
+  ## - "bugfix/*"
+##
+## The 'latest' tag is applied to master branch image. Again, this should never be used in production
+
+on:
+  # This is triggered from a dispatch by the openeyes/openeyes repo
+  repository_dispatch:
+    types: [build]
+env:
+  PRIMARY_PHP_VERSION: "7.4"
+  DOCKER_ORG: "toukanlabsdocker"
+  DOCKER_WEB_IMAGE: "oe-web-live"
+  DOCKER_BOOTSTRAP_IMAGE: "oe-db-bootstrap"
+  IMAGE_SUFFIX: ""
+  # The next 2 come from the dispatch action, which uses rlespinasse/github-slug-action to generate the refs
+  GITHUB_REF_SLUG: ${{ github.event.client_payload.message.GITHUB_REF_SLUG }}
+  GITHUB_REF_NAME: ${{ github.event.client_payload.message.GITHUB_REF_NAME }}
+
+jobs:
+  build_and_push_to_registry:
+    if: ( github.repository == 'openeyes/OpenEyes' || github.repository == 'biskyt/test-action' )
+    name: Build and push production images
+    runs-on: ubuntu-latest
+      
+    strategy:
+      fail-fast: false 
+      matrix:
+        ## Setup the differnt build jobs. These can specify: 
+        #   - a special client build ONLY WHEN A SPECIFIC CLIENT REQUIRES ADDITIONAL CUSTOM MODULES
+        #        - In which case, "modules" should be specified as a comma separated string, and can include
+        #          class namespacing in the format <module>=<class>
+        #   - a diffenerent PHP version
+        experimental: [false]
+        include:
+          - client-suffix: ''
+            modules: ''
+            php-version: "7.4"
+          - client-suffix: 'meh'
+            modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule::class'
+            php-version: "7.4"
+          - client-suffix: 'wales'
+            modules: 'SupCoPhonelog,OphInKowastereo'
+            php-version: "7.4"
+          ## PHP 8 builds are currently experimental, so are allowed to fail
+          - client-suffix: ''
+            modules: ''
+            php-version: "8.0"
+            experimental: true
+          - client-suffix: 'meh'
+            modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule::class'
+            php-version: "8.0"
+            experimental: true
+    continue-on-error: ${{ matrix.experimental }}
+
+    steps:
+      
+      - name: Checkout OEBuilder
+        uses: actions/checkout@v2
+        with:
+          repository: ToukanLabs/OEImageBuilder
+          ref: master
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+            ssh-private-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+
+      # Resolve the github ref to use as a build arg in following step(s)
+      # This creates ${{ env.GITHUB_REF_NAME }} with the correct branch or tag name
+      - name: Resolve ref
+        uses: rlespinasse/github-slug-action@v3.x
+
+      - name: Setup image suffix
+        id: setsuffix
+        shell: bash
+        run: |
+          if [ -n "$CLIENT_SUFFIX" ] || [ -n "$PHP_VERSION" ]; then       
+            # Set client prefix if specified
+            [ -n "$CLIENT_SUFFIX" ] && IMAGE_SUFFIX="$IMAGE_SUFFIX-$CLIENT_SUFFIX" || :
+            
+            # set php version prefix if specified. Do not set a prefix if this is the primary version
+            [[ -n "$PHP_VERSION" && "$PHP_VERSION" != "$PRIMARY_PHP_VERSION" ]] && IMAGE_SUFFIX="$IMAGE_SUFFIX-php$PHP_VERSION" || :
+            
+            if [ -n "$IMAGE_SUFFIX" ]; then
+              echo ::set-output name=hassuffix::${{ toJSON(true) }}
+              echo "IMAGE_SUFFIX=${IMAGE_SUFFIX}" >> $GITHUB_ENV
+              echo "IMAGE_SUFFIX set to: ${IMAGE_SUFFIX}"
+            else
+              echo ::set-output name=hassuffix::${{ toJSON(false) }}
+            fi
+          else
+            echo ::set-output name=hassuffix::${{ toJSON(false) }}
+          fi
+        env:
+          CLIENT_SUFFIX: ${{ matrix.client-suffix }}
+          PHP_VERSION: ${{ matrix.php-version }}
+          IMAGE_SUFFIX: ${{ env.IMAGE_SUFFIX }}
+          PRIMARY_PHP_VERSION: ${{ env.PRIMARY_PHP_VERSION }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          # driver: docker is required to allow images to be reused by subsequent steps
+          driver: docker
+
+########### Setup tags for each image
+      - name: Setup metadata tags for LIVE image
+        id: meta-live
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+          # Only apply the latest tag to the master branch
+          # add suffix for any client or php-version specific images
+          flavor: |
+            latest=${{ (contains(github.ref,'refs/heads/master') && ! fromJSON(steps.setsuffix.outputs.hassuffix)) && true || false }}
+            suffix=${{ env.IMAGE_SUFFIX }}
+          # set tags to symantic versions for each release.
+          # NOTE: for semver, the tag must contain 3x parts 1.2.3 (e.g v4.1.0)
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
+            type=semver,pattern=v{{major}}
+            type=edge,branch=develop
+
+      - name: Setup metadata for DatabaseBootstrap image
+        id: meta-dbboot
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_BOOTSTRAP_IMAGE }}
+          # Only apply the latest tag to the master branch
+          flavor: |
+            latest=${{ (contains(github.ref,'refs/heads/master') && ! fromJSON(steps.setsuffix.outputs.hassuffix)) && true || false }}
+            suffix=${{ env.IMAGE_SUFFIX }}
+          # set tags to symantic versions for each release.
+          # NOTE: for semver, the tag must contain 3x parts 1.2.3 (e.g v4.1.0)
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
+            type=semver,pattern=v{{major}}
+            type=edge,branch=develop
+        
+      - name: Setup metadata tags for DEBUG image
+        id: meta-debug
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+          # Only apply the latest tag to the master branch
+          # add suffix for any client or php-version specific images
+          # Add a prefix of "debug-" to designate this as a debug image
+          flavor: |
+            latest=${{ (contains(github.ref,'refs/heads/master') && ! fromJSON(steps.setsuffix.outputs.hassuffix)) && true || false }}
+            suffix=${{ env.IMAGE_SUFFIX }}
+            prefix=debug-,onlatest=true
+          # set tags to symantic versions for each release.
+          # NOTE: for semver, the tag must contain 3x parts 1.2.3 (e.g v4.1.0)
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
+            type=semver,pattern=v{{major}}
+            type=edge,branch=develop
+
+###########  Build images
+
+      - name: Build LIVE image
+        uses: docker/build-push-action@v2
+        with:
+          ssh: |
+              default=${{ env.SSH_AUTH_SOCK }}
+          context: ./Web-Live
+          push: false
+          build-args: |
+            BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
+            MODULES=${{ matrix.modules }}
+            PHP_VERSION=${{ matrix.php-version }}
+          tags: ${{ steps.meta-live.outputs.tags }}
+          labels: ${{ steps.meta-live.outputs.labels }}
+
+      - name: Build DatabaseBootstrap image
+        uses: docker/build-push-action@v2
+        with:
+          ssh: |
+              default=${{ env.SSH_AUTH_SOCK }}
+          context: ./DatabaseBootstrap
+          push: false
+          build-args: | # Note that OE_VERSION must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+            BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
+            MODULES=${{ matrix.modules }}
+            OE_VERSION=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
+            BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+            PHP_VERSION=${{ matrix.php-version }}
+          tags: ${{ steps.meta-dbboot.outputs.tags }}
+          labels: ${{ steps.meta-dbboot.outputs.labels }}
+          
+###########  Debug image
+# Debug images contain the same code as the live image, but include additional debugging tools and run in dev mode
+
+      - name: Build DEBUG image
+        uses: docker/build-push-action@v2
+        with:
+          ssh: |
+              default=${{ env.SSH_AUTH_SOCK }}
+          context: ./Web-Dev
+          push: false
+          # Note that BASE_IMAGE_TAG must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+          # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
+          build-args: | 
+            BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
+            BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+            BASE_IMAGE_TAG=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
+            PHP_VERSION=${{ matrix.php-version }}
+            PROD_DEBUG=TRUE
+          tags: ${{ steps.meta-debug.outputs.tags }}
+          labels: ${{ steps.meta-debug.outputs.labels }}
+
+########### Push final images to docker registry
+
+      # - name: Push Live image
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     ssh: |
+      #         default=${{ env.SSH_AUTH_SOCK }}
+      #     context: ./Web-Live
+      #     push: true
+      #     build-args: |
+      #       BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
+      #       MODULES=${{ matrix.modules }}
+      #       PHP_VERSION=${{ matrix.php-version }}
+      #     tags: ${{ steps.meta-live.outputs.tags }}
+      #     labels: ${{ steps.meta-live.outputs.labels }}
+
+      # - name: Push DatabaseBootstrap image
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     ssh: |
+      #         default=${{ env.SSH_AUTH_SOCK }}
+      #     context: ./DatabaseBootstrap
+      #     push: true
+      #     build-args: | # Note that OE_VERSION must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+      #       BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
+      #       MODULES=${{ matrix.modules }}
+      #       OE_VERSION=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
+      #       BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+      #       PHP_VERSION=${{ matrix.php-version }}
+      #     tags: ${{ steps.meta-dbboot.outputs.tags }}
+      #     labels: ${{ steps.meta-dbboot.outputs.labels }}
+
+      # - name: Push DEBUG image
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     ssh: |
+      #         default=${{ env.SSH_AUTH_SOCK }}
+      #     context: ./Web-Dev
+      #     push: true
+      #     # Note that BASE_IMAGE_TAG must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+      #     # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
+      #     build-args: | 
+      #       BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
+      #       BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+      #       BASE_IMAGE_TAG=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
+      #       PHP_VERSION=${{ matrix.php-version }}
+      #       PROD_DEBUG=TRUE
+      #     tags: ${{ steps.meta-debug.outputs.tags }}
+      #     labels: ${{ steps.meta-debug.outputs.labels }}
