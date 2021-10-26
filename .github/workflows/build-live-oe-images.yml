@@ -81,11 +81,6 @@ jobs:
         with:
             ssh-private-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
 
-      # Resolve the github ref to use as a build arg in following step(s)
-      # This creates ${{ env.GITHUB_REF_NAME }} with the correct branch or tag name
-      - name: Resolve ref
-        uses: rlespinasse/github-slug-action@v3.x
-
       - name: Setup image suffix
         id: setsuffix
         shell: bash
