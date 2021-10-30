@@ -121,66 +121,77 @@ jobs:
           driver: docker
 
 ########### Setup tags for each image
-      - name: Setup metadata tags for LIVE image
-        id: meta-live
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
-          # Only apply the latest tag to the master branch
-          # add suffix for any client or php-version specific images
-          flavor: |
-            latest=${{ (contains(github.ref,'refs/heads/master') && ! fromJSON(steps.setsuffix.outputs.hassuffix)) && true || false }}
-            suffix=${{ env.IMAGE_SUFFIX }}
-          # set tags to symantic versions for each release.
-          # NOTE: for semver, the tag must contain 3x parts 1.2.3 (e.g v4.1.0)
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=semver,pattern=v{{version}}
-            type=semver,pattern=v{{major}}.{{minor}}
-            type=semver,pattern=v{{major}}
-            type=edge,branch=develop
 
-      - name: Setup metadata for DatabaseBootstrap image
-        id: meta-dbboot
-        uses: biskyt/metadata-action@master
+      - name: Setup live image tags
+        id: meta-live
+        uses: toukanlabs/build-tag-gen@v3
         with:
-          images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_BOOTSTRAP_IMAGE }}
-          # Only apply the latest tag to the master branch
-          flavor: |
-            latest=${{ (contains(github.ref,'refs/heads/master') && ! fromJSON(steps.setsuffix.outputs.hassuffix)) && true || false }}
-            suffix=${{ env.IMAGE_SUFFIX }}
-          # set tags to symantic versions for each release.
-          # NOTE: for semver, the tag must contain 3x parts 1.2.3 (e.g v4.1.0)
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=semver,pattern=v{{version}}
-            type=semver,pattern=v{{major}}.{{minor}}
-            type=semver,pattern=v{{major}}
-            type=edge,branch=develop
+          image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+          slug: ${{ env.GITHUB_REF_SLUG }}
+          suffix: ${{ env.IMAGE_SUFFIX }}
+          docker-user: ${{ secrets.DOCKER_USERNAME }}
+          docker-pass: ${{ secrets.DOCKER_PASSWORD }}
+
+      # - name: Setup metadata tags for LIVE image
+      #   id: meta-live
+      #   uses: docker/metadata-action@v3
+      #   with:
+      #     images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+      #     # Only apply the latest tag to the master branch
+      #     # add suffix for any client or php-version specific images
+      #     flavor: |
+      #       latest=${{ (contains(github.ref,'refs/heads/master') && ! fromJSON(steps.setsuffix.outputs.hassuffix)) && true || false }}
+      #       suffix=${{ env.IMAGE_SUFFIX }}
+      #     # set tags to symantic versions for each release.
+      #     # NOTE: for semver, the tag must contain 3x parts 1.2.3 (e.g v4.1.0)
+      #     tags: |
+      #       type=ref,event=branch
+      #       type=ref,event=tag
+      #       type=semver,pattern=v{{version}}
+      #       type=semver,pattern=v{{major}}.{{minor}}
+      #       type=semver,pattern=v{{major}}
+      #       type=edge,branch=develop
+
+      # - name: Setup metadata for DatabaseBootstrap image
+      #   id: meta-dbboot
+      #   uses: biskyt/metadata-action@master
+      #   with:
+      #     images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_BOOTSTRAP_IMAGE }}
+      #     # Only apply the latest tag to the master branch
+      #     flavor: |
+      #       latest=${{ (contains(github.ref,'refs/heads/master') && ! fromJSON(steps.setsuffix.outputs.hassuffix)) && true || false }}
+      #       suffix=${{ env.IMAGE_SUFFIX }}
+      #     # set tags to symantic versions for each release.
+      #     # NOTE: for semver, the tag must contain 3x parts 1.2.3 (e.g v4.1.0)
+      #     tags: |
+      #       type=ref,event=branch
+      #       type=ref,event=tag
+      #       type=semver,pattern=v{{version}}
+      #       type=semver,pattern=v{{major}}.{{minor}}
+      #       type=semver,pattern=v{{major}}
+      #       type=edge,branch=develop
         
-      - name: Setup metadata tags for DEBUG image
-        id: meta-debug
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
-          # Only apply the latest tag to the master branch
-          # add suffix for any client or php-version specific images
-          # Add a prefix of "debug-" to designate this as a debug image
-          flavor: |
-            latest=${{ (contains(github.ref,'refs/heads/master') && ! fromJSON(steps.setsuffix.outputs.hassuffix)) && true || false }}
-            suffix=${{ env.IMAGE_SUFFIX }}
-            prefix=debug-,onlatest=true
-          # set tags to symantic versions for each release.
-          # NOTE: for semver, the tag must contain 3x parts 1.2.3 (e.g v4.1.0)
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=semver,pattern=v{{version}}
-            type=semver,pattern=v{{major}}.{{minor}}
-            type=semver,pattern=v{{major}}
-            type=edge,branch=develop
+      # - name: Setup metadata tags for DEBUG image
+      #   id: meta-debug
+      #   uses: docker/metadata-action@v3
+      #   with:
+      #     images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+      #     # Only apply the latest tag to the master branch
+      #     # add suffix for any client or php-version specific images
+      #     # Add a prefix of "debug-" to designate this as a debug image
+      #     flavor: |
+      #       latest=${{ (contains(github.ref,'refs/heads/master') && ! fromJSON(steps.setsuffix.outputs.hassuffix)) && true || false }}
+      #       suffix=${{ env.IMAGE_SUFFIX }}
+      #       prefix=debug-,onlatest=true
+      #     # set tags to symantic versions for each release.
+      #     # NOTE: for semver, the tag must contain 3x parts 1.2.3 (e.g v4.1.0)
+      #     tags: |
+      #       type=ref,event=branch
+      #       type=ref,event=tag
+      #       type=semver,pattern=v{{version}}
+      #       type=semver,pattern=v{{major}}.{{minor}}
+      #       type=semver,pattern=v{{major}}
+      #       type=edge,branch=develop
 
 ###########  Build images
 
@@ -196,44 +207,43 @@ jobs:
             MODULES=${{ matrix.modules }}
             PHP_VERSION=${{ matrix.php-version }}
           tags: ${{ steps.meta-live.outputs.tags }}
-          labels: ${{ steps.meta-live.outputs.labels }}
 
-      - name: Build DatabaseBootstrap image
-        uses: docker/build-push-action@v2
-        with:
-          ssh: |
-              default=${{ env.SSH_AUTH_SOCK }}
-          context: ./DatabaseBootstrap
-          push: false
-          build-args: | # Note that OE_VERSION must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
-            BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
-            MODULES=${{ matrix.modules }}
-            OE_VERSION=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
-            BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
-            PHP_VERSION=${{ matrix.php-version }}
-          tags: ${{ steps.meta-dbboot.outputs.tags }}
-          labels: ${{ steps.meta-dbboot.outputs.labels }}
+#       - name: Build DatabaseBootstrap image
+#         uses: docker/build-push-action@v2
+#         with:
+#           ssh: |
+#               default=${{ env.SSH_AUTH_SOCK }}
+#           context: ./DatabaseBootstrap
+#           push: false
+#           build-args: | # Note that OE_VERSION must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+#             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
+#             MODULES=${{ matrix.modules }}
+#             OE_VERSION=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
+#             BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+#             PHP_VERSION=${{ matrix.php-version }}
+#           tags: ${{ steps.meta-dbboot.outputs.tags }}
+#           labels: ${{ steps.meta-dbboot.outputs.labels }}
           
-###########  Debug image
-# Debug images contain the same code as the live image, but include additional debugging tools and run in dev mode
+# ###########  Debug image
+# # Debug images contain the same code as the live image, but include additional debugging tools and run in dev mode
 
-      - name: Build DEBUG image
-        uses: docker/build-push-action@v2
-        with:
-          ssh: |
-              default=${{ env.SSH_AUTH_SOCK }}
-          context: ./Web-Dev
-          push: false
-          # Note that BASE_IMAGE_TAG must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
-          # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
-          build-args: | 
-            BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
-            BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
-            BASE_IMAGE_TAG=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
-            PHP_VERSION=${{ matrix.php-version }}
-            PROD_DEBUG=TRUE
-          tags: ${{ steps.meta-debug.outputs.tags }}
-          labels: ${{ steps.meta-debug.outputs.labels }}
+#       - name: Build DEBUG image
+#         uses: docker/build-push-action@v2
+#         with:
+#           ssh: |
+#               default=${{ env.SSH_AUTH_SOCK }}
+#           context: ./Web-Dev
+#           push: false
+#           # Note that BASE_IMAGE_TAG must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+#           # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
+#           build-args: | 
+#             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
+#             BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+#             BASE_IMAGE_TAG=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
+#             PHP_VERSION=${{ matrix.php-version }}
+#             PROD_DEBUG=TRUE
+#           tags: ${{ steps.meta-debug.outputs.tags }}
+#           labels: ${{ steps.meta-debug.outputs.labels }}
 
 ########### Push final images to docker registry
 
