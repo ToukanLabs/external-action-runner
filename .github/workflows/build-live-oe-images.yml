@@ -143,7 +143,7 @@ jobs:
           docker-pass: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Setup metadata for Debug image tags
-        id: meta-dbboot
+        id: meta-debug
         uses: toukanlabs/build-tag-gen@v3
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
