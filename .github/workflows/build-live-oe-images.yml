@@ -29,6 +29,7 @@ env:
   # The next 2 come from the dispatch action, which uses rlespinasse/github-slug-action to generate the refs
   GITHUB_REF_SLUG: ${{ github.event.client_payload.message.GITHUB_REF_SLUG }}
   GITHUB_REF_NAME: ${{ github.event.client_payload.message.GITHUB_REF_NAME }}
+  REF_SLUG_NO_V: ""
 
 jobs:
   build_and_push_to_registry:
@@ -108,6 +109,7 @@ jobs:
           PHP_VERSION: ${{ matrix.php-version }}
           IMAGE_SUFFIX: ${{ env.IMAGE_SUFFIX }}
           PRIMARY_PHP_VERSION: ${{ env.PRIMARY_PHP_VERSION }}
+          GITHUB_REF_SLUG: ${{ env.GITHUB_REF_SLUG }}
 
       - name: Log in to Docker Hub
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
@@ -179,7 +181,7 @@ jobs:
           build-args: | # Note that OE_VERSION must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
-            OE_VERSION=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
+            OE_VERSION=${{ steps.meta-dbboot.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
             PHP_VERSION=${{ matrix.php-version }}
           tags: ${{ steps.meta-dbboot.outputs.tags }}
@@ -200,7 +202,7 @@ jobs:
           build-args: | 
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
-            BASE_IMAGE_TAG=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
+            BASE_IMAGE_TAG=${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             PHP_VERSION=${{ matrix.php-version }}
             PROD_DEBUG=TRUE
           tags: ${{ steps.meta-debug.outputs.tags }}
@@ -231,7 +233,7 @@ jobs:
           build-args: | # Note that OE_VERSION must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
-            OE_VERSION=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
+            OE_VERSION=${{ steps.meta-dbboot.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
             PHP_VERSION=${{ matrix.php-version }}
           tags: ${{ steps.meta-dbboot.outputs.tags }}
@@ -249,7 +251,7 @@ jobs:
           build-args: | 
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
-            BASE_IMAGE_TAG=${{ env.GITHUB_REF_SLUG }}${{ env.IMAGE_SUFFIX }}
+            BASE_IMAGE_TAG=${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             PHP_VERSION=${{ matrix.php-version }}
             PROD_DEBUG=TRUE
           tags: ${{ steps.meta-debug.outputs.tags }}
