@@ -19,7 +19,7 @@ name: Publish OpenEyes LiveDocker images
 on:
   # This is triggered from a dispatch by the openeyes/openeyes repo
   repository_dispatch:
-    types: [build]
+
 env:
   PRIMARY_PHP_VERSION: "7.4"
   DOCKER_ORG: "toukanlabsdocker"
@@ -32,6 +32,7 @@ env:
 
 jobs:
   build_and_push_to_registry:
+    if: ${{ github.event.client_payload.message.GITHUB_REF_NAME }} != ""
     name: Build and push production images
     runs-on: ubuntu-latest
       
