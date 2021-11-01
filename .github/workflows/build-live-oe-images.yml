@@ -161,8 +161,10 @@ jobs:
           docker-user: ${{ secrets.DOCKER_USERNAME }}
           docker-pass: ${{ secrets.DOCKER_PASSWORD }}
 
-###########  Build images
-
+################
+# Build images #
+################
+      # LIVE
       - name: Build LIVE image
         uses: docker/build-push-action@v2
         with:
@@ -175,7 +177,7 @@ jobs:
             MODULES=${{ matrix.modules }}
             PHP_VERSION=${{ matrix.php-version }}
           tags: ${{ steps.meta-live.outputs.tags }}
-
+      # DB Bootstrap
       - name: Build DatabaseBootstrap image
         uses: docker/build-push-action@v2
         with:
@@ -183,19 +185,16 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./DatabaseBootstrap
           push: false
-          build-args: | # Note that OE_VERSION must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+          build-args: | # Note that OE_VERSION must use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
             OE_VERSION=${{ steps.meta-dbboot.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
             PHP_VERSION=${{ matrix.php-version }}
-          tags: |
-            ${{ steps.meta-dbboot.outputs.tags }}
+          tags: ${{ steps.meta-dbboot.outputs.tags }}
           
-          
-###########  Debug image
-# Debug images contain the same code as the live image, but include additional debugging tools and run in dev mode
-
+      # DEBUG
+        # (Debug images contain the same code as the live image, but include additional debugging tools and run in dev mode)
       - name: Build DEBUG image
         uses: docker/build-push-action@v2
         with:
@@ -203,7 +202,7 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Dev
           push: false
-          # Note that BASE_IMAGE_TAG must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+          # Note that BASE_IMAGE_TAG must use use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
           # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
           build-args: | 
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
@@ -211,33 +210,36 @@ jobs:
             BASE_IMAGE_TAG=${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             PHP_VERSION=${{ matrix.php-version }}
             PROD_DEBUG=TRUE
-          tags: |
-            ${{ steps.meta-debug.outputs.tags }}
+          tags: ${{ steps.meta-debug.outputs.tags }}
           
 
-########## Push final images to docker registry
+######################################## 
+# Push final images to docker registry #
+########################################
 
+      # LIVE
       - name: Push Live image
         uses: docker/build-push-action@v2
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Live
-          push: false
+          push: true
           build-args: |
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
             PHP_VERSION=${{ matrix.php-version }}
           tags: ${{ steps.meta-live.outputs.tags }}
 
+      # DB Bootsrap
       - name: Push DatabaseBootstrap image
         uses: docker/build-push-action@v2
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./DatabaseBootstrap
-          push: false
-          build-args: | # Note that OE_VERSION must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+          push: true
+          build-args: | # Note that OE_VERSION must use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
             OE_VERSION=${{ steps.meta-dbboot.outputs.slug }}${{ env.IMAGE_SUFFIX }}
@@ -252,8 +254,8 @@ jobs:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Dev
-          push: false
-          # Note that BASE_IMAGE_TAG must use GITHUB_REF_SLUG, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+          push: true
+          # Note that BASE_IMAGE_TAG must use use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
           # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
           build-args: | 
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
