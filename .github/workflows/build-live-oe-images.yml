@@ -189,7 +189,8 @@ jobs:
             OE_VERSION=${{ steps.meta-dbboot.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
             PHP_VERSION=${{ matrix.php-version }}
-          tags: ${{ steps.meta-dbboot.outputs.tags }}
+          tags: |
+            ${{ steps.meta-dbboot.outputs.tags }}
           
           
 ###########  Debug image
@@ -210,7 +211,8 @@ jobs:
             BASE_IMAGE_TAG=${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             PHP_VERSION=${{ matrix.php-version }}
             PROD_DEBUG=TRUE
-          tags: ${{ steps.meta-debug.outputs.tags }}
+          tags: |
+            ${{ steps.meta-debug.outputs.tags }}
           
 
 ########## Push final images to docker registry
