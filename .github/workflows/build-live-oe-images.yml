@@ -145,6 +145,11 @@ jobs:
           docker-user: ${{ secrets.DOCKER_USERNAME }}
           docker-pass: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: TESTING123
+        run: |
+          echo -e "SLUG ${{ steps.meta-dbboot.outputs.slug}}\nTAGS:${{steps.meta-dbboot.outputs.tags }}"
+          exit 1
+
       - name: Setup metadata for Debug image tags
         id: meta-debug
         uses: toukanlabs/build-tag-gen@v3
