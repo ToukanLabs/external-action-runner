@@ -24,7 +24,7 @@ env:
   PRIMARY_PHP_VERSION: "7.4"
   DOCKER_ORG: "toukanlabsdocker"
   DOCKER_WEB_IMAGE: "oe-web-live"
-  DOCKER_BOOTSTRAP_IMAGE: "oe-db-bootstrap"
+  DOCKER_MANAGER_IMAGE: "oe-manager"
   IMAGE_SUFFIX: ""
   # The next 2 come from the dispatch action, which uses rlespinasse/github-slug-action to generate the refs
   GITHUB_REF_SLUG: ${{ github.event.client_payload.message.GITHUB_REF_SLUG }}
@@ -135,11 +135,11 @@ jobs:
           docker-user: ${{ secrets.DOCKER_USERNAME }}
           docker-pass: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Setup metadata for Bootstrap image tags
+      - name: Setup metadata for Manager image tags
         id: meta-dbboot
         uses: toukanlabs/build-tag-gen@v3
         with:
-          image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_BOOTSTRAP_IMAGE }}
+          image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_MANAGER_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
           suffix: ${{ env.IMAGE_SUFFIX }}
           docker-user: ${{ secrets.DOCKER_USERNAME }}
@@ -177,13 +177,13 @@ jobs:
             MODULES=${{ matrix.modules }}
             PHP_VERSION=${{ matrix.php-version }}
           tags: ${{ steps.meta-live.outputs.tags }}
-      # DB Bootstrap
-      - name: Build DatabaseBootstrap image
+      # Manager
+      - name: Build Manager image
         uses: docker/build-push-action@v2
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
-          context: ./DatabaseBootstrap
+          context: ./Manager
           push: false
           build-args: | # Note that OE_VERSION must use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
@@ -231,13 +231,13 @@ jobs:
             PHP_VERSION=${{ matrix.php-version }}
           tags: ${{ steps.meta-live.outputs.tags }}
 
-      # DB Bootsrap
-      - name: Push DatabaseBootstrap image
+      # Manager
+      - name: Push Manager image
         uses: docker/build-push-action@v2
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
-          context: ./DatabaseBootstrap
+          context: ./Manager
           push: true
           build-args: | # Note that OE_VERSION must use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
