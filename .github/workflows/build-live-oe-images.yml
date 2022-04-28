@@ -64,7 +64,8 @@ jobs:
             php-version: "8.0"
             experimental: true
           - client-suffix: 'meh'
-            modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
+            modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb'
+            # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
             php-version: "8.0"
             experimental: true
     continue-on-error: ${{ matrix.experimental }}
