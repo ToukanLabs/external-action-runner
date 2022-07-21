@@ -19,6 +19,7 @@ name: Publish OpenEyes LiveDocker images
 on:
   # This is triggered from a dispatch by the openeyes/openeyes repo
   repository_dispatch:
+  workflow_dispatch:
 
 env:
   PRIMARY_PHP_VERSION: "7.4"
