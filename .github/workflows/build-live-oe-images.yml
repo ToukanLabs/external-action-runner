@@ -207,7 +207,7 @@ jobs:
             BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
             BASE_IMAGE_TAG=${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             PHP_VERSION=${{ matrix.php-version }}
-            CYPRESS_VERSION=''
+            CYPRESS_VERSION=
             PROD_DEBUG=TRUE
           tags: ${{ steps.meta-debug.outputs.tags }}
           
