@@ -53,7 +53,7 @@ jobs:
             experimental: false
           - client-suffix: 'meh'
             # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
-            modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb'
+            modules: 'OphLeEpatientletter,mehstaffdb'
             php-version: "7.4"
             experimental: false
           - client-suffix: 'wales'
@@ -66,7 +66,7 @@ jobs:
             php-version: "8.0"
             experimental: true
           - client-suffix: 'meh'
-            modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb'
+            modules: 'OphLeEpatientletter,mehstaffdb'
             # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
             php-version: "8.0"
             experimental: true
