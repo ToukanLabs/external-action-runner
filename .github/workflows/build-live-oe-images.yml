@@ -56,10 +56,10 @@ jobs:
             modules: 'OphLeEpatientletter,mehstaffdb,OphInMehPac'
             php-version: "7.4"
             experimental: false
-          - client-suffix: 'wales'
-            modules: 'SupCoPhonelog,OphInKowastereo'
-            php-version: "7.4"
-            experimental: false
+          # - client-suffix: 'wales'
+          #   modules: 'SupCoPhonelog,OphInKowastereo'
+          #   php-version: "7.4"
+          #   experimental: false
           ## PHP 8 builds are currently experimental, so are allowed to fail
           ### Temporarily disabled, seeing as application does not yet work in 8.0...
           # - client-suffix: ''
