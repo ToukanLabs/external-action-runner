@@ -101,14 +101,14 @@ jobs:
             [[ -n "$PHP_VERSION" && "$PHP_VERSION" != "$PRIMARY_PHP_VERSION" ]] && IMAGE_SUFFIX="$IMAGE_SUFFIX-php$PHP_VERSION" || :
             
             if [ -n "$IMAGE_SUFFIX" ]; then
-              echo ::set-output name=hassuffix::${{ toJSON(true) }}
+              echo "{hassuffix}=${{ toJSON(true) }}" >> $GITHUB_OUTPUT
               echo "IMAGE_SUFFIX=${IMAGE_SUFFIX}" >> $GITHUB_ENV
               echo "IMAGE_SUFFIX set to: ${IMAGE_SUFFIX}"
             else
-              echo ::set-output name=hassuffix::${{ toJSON(false) }}
+              echo "{hassuffix}=${{ toJSON(false) }}" >> $GITHUB_OUTPUT
             fi
           else
-            echo ::set-output name=hassuffix::${{ toJSON(false) }}
+            echo "{hassuffix}=${{ toJSON(false) }}" >> $GITHUB_OUTPUT
           fi
         env:
           CLIENT_SUFFIX: ${{ matrix.client-suffix }}
