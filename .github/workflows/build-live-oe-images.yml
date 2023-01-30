@@ -58,7 +58,7 @@ jobs:
             experimental: false
           - client-suffix: 'newmedica'
             modules: 'NewMedica'
-            php-version: "8.1"
+            php-version: "7.4"
             experimental: false
           - client-suffix: ''
             modules: ''
