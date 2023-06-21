@@ -26,6 +26,7 @@ env:
   DOCKER_ORG: "toukanlabsdocker"
   DOCKER_WEB_IMAGE: "oe-web-live"
   DOCKER_MANAGER_IMAGE: "oe-manager"
+  DOCKER_AWS_CLI_IMAGE: "aws-cli"
   IMAGE_SUFFIX: ""
   # The next 2 come from the dispatch action, which uses rlespinasse/github-slug-action to generate the refs
   GITHUB_REF_SLUG: ${{ github.event.client_payload.message.GITHUB_REF_SLUG }}
@@ -162,6 +163,16 @@ jobs:
           docker-user: ${{ secrets.DOCKER_USERNAME }}
           docker-pass: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Setup metadata for Aws-Cli image tags
+        id: meta-debug
+        uses: toukanlabs/build-tag-gen@v3
+        with:
+          image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_AWS_CLI_IMAGE }}
+          slug: ${{ env.GITHUB_REF_SLUG }}
+          suffix: ${{ env.IMAGE_SUFFIX }}
+          docker-user: ${{ secrets.DOCKER_USERNAME }}
+          docker-pass: ${{ secrets.DOCKER_PASSWORD }}
+
 ################
 # Build images #
 ################
@@ -214,7 +225,15 @@ jobs:
             PROD_DEBUG=TRUE
           tags: ${{ steps.meta-debug.outputs.tags }}
           
-
+      # Aws-Cli
+      - name: Build Aws-Cli image
+        uses: docker/build-push-action@v2
+        with:
+          ssh: |
+              default=${{ env.SSH_AUTH_SOCK }}
+          context: ./Aws-Cli
+          push: false
+          tags: ${{ steps.meta-dbboot.outputs.tags }}
 ######################################## 
 # Push final images to docker registry #
 ########################################
@@ -249,7 +268,7 @@ jobs:
             PHP_VERSION=${{ matrix.php-version }}
           tags: ${{ steps.meta-dbboot.outputs.tags }}
           
-
+      # Debug
       - name: Push DEBUG image
         uses: docker/build-push-action@v2
         with:
@@ -267,4 +286,14 @@ jobs:
             CYPRESS_VERSION=
             PROD_DEBUG=TRUE
           tags: ${{ steps.meta-debug.outputs.tags }}
-          
+
+      # Aws-Cli
+      - name: Push Aws-Cli image
+        uses: docker/build-push-action@v2
+        with:
+          ssh: |
+              default=${{ env.SSH_AUTH_SOCK }}
+          context: ./Aws-Cli
+          push: true
+          tags: ${{ steps.meta-dbboot.outputs.tags }}
+
