@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
 
 env:
-  PRIMARY_PHP_VERSION: "7.4"
+  PRIMARY_PHP_VERSION: "8.0"
   DOCKER_ORG: "toukanlabsdocker"
   DOCKER_WEB_IMAGE: "oe-web-live"
   DOCKER_MANAGER_IMAGE: "oe-manager"
@@ -51,28 +51,28 @@ jobs:
             modules: ''
             php-version: "7.4"
             experimental: false
-          - client-suffix: 'meh'
-            # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
-            modules: 'OphLeEpatientletter,mehstaffdb,OphInMehPac'
-            php-version: "7.4"
-            experimental: false
-          - client-suffix: 'newmedica'
-            modules: 'NewMedica'
-            php-version: "7.4"
-            experimental: false
           - client-suffix: ''
             modules: ''
             php-version: "8.0"
+            experimental: false
+          - client-suffix: ''
+            modules: ''
+            php-version: "8.1"
             experimental: true
+          # Client specific Images
+          - client-suffix: 'newmedica'
+            modules: 'NewMedica'
+            php-version: "7.4"
+            experimental: false
+          - client-suffix: 'newmedica'
+            modules: 'NewMedica'
+            php-version: "8.0"
+            experimental: false
           - client-suffix: 'meh'
             modules: 'OphLeEpatientletter,mehstaffdb,OphInMehPac'
             # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
             php-version: "8.0"
-            experimental: true
-          - client-suffix: 'newmedica'
-            modules: 'NewMedica'
-            php-version: "8.1"
-            experimental: true
+            experimental: false
     continue-on-error: ${{ matrix.experimental }}
 
     steps:
