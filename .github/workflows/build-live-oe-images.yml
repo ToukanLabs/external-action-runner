@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
 
 env:
-  PRIMARY_PHP_VERSION: "7.4"
+  PRIMARY_PHP_VERSION: "8.0"
   DOCKER_ORG: "toukanlabsdocker"
   DOCKER_WEB_IMAGE: "oe-web-live"
   DOCKER_MANAGER_IMAGE: "oe-manager"
@@ -50,29 +50,36 @@ jobs:
           - client-suffix: ''
             modules: ''
             php-version: "7.4"
-            experimental: false
-          - client-suffix: 'meh'
-            # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
-            modules: 'OphLeEpatientletter,mehstaffdb,OphInMehPac'
-            php-version: "7.4"
-            experimental: false
-          - client-suffix: 'newmedica'
-            modules: 'NewMedica'
-            php-version: "8.1"
+            os-version: "focal"
             experimental: false
           - client-suffix: ''
             modules: ''
             php-version: "8.0"
+            os-version: "jammy"
+            experimental: false
+          - client-suffix: ''
+            modules: ''
+            php-version: "8.1"
+            os-version: "jammy"
             experimental: true
+          # Client specific builds
           - client-suffix: 'meh'
-            modules: 'OphLeEpatientletter,mehstaffdb,OphInMehPac'
             # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
+            modules: 'OphLeEpatientletter,mehstaffdb,OphInMehPac'
             php-version: "8.0"
-            experimental: true
+            os-version: "focal"
+            experimental: false
           - client-suffix: 'newmedica'
             modules: 'NewMedica'
-            php-version: "8.1"
-            experimental: true
+            php-version: "7.4"
+            os-version: "focal"
+            experimental: false
+          - client-suffix: 'newmedica'
+            modules: 'NewMedica'
+            php-version: "8.0"
+            os-version: "jammy"
+            experimental: false
+          
     continue-on-error: ${{ matrix.experimental }}
 
     steps:
@@ -113,6 +120,7 @@ jobs:
         env:
           CLIENT_SUFFIX: ${{ matrix.client-suffix }}
           PHP_VERSION: ${{ matrix.php-version }}
+          OS_VERSION: ${{ matrix.os-version }}
           IMAGE_SUFFIX: ${{ env.IMAGE_SUFFIX }}
           PRIMARY_PHP_VERSION: ${{ env.PRIMARY_PHP_VERSION }}
           GITHUB_REF_SLUG: ${{ env.GITHUB_REF_SLUG }}
@@ -192,6 +200,7 @@ jobs:
             OE_VERSION=${{ steps.meta-dbboot.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
             PHP_VERSION=${{ matrix.php-version }}
+            OS_VERSION=${{ matrix.os-version }}
           tags: ${{ steps.meta-dbboot.outputs.tags }}
           
       # DEBUG
@@ -210,6 +219,7 @@ jobs:
             BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
             BASE_IMAGE_TAG=${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             PHP_VERSION=${{ matrix.php-version }}
+            OS_VERSION=${{ matrix.os-version }}
             CYPRESS_VERSION=
             PROD_DEBUG=TRUE
           tags: ${{ steps.meta-debug.outputs.tags }}
@@ -231,6 +241,7 @@ jobs:
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
             PHP_VERSION=${{ matrix.php-version }}
+            OS_VERSION=${{ matrix.os-version }}
           tags: ${{ steps.meta-live.outputs.tags }}
 
       # Manager
@@ -247,6 +258,7 @@ jobs:
             OE_VERSION=${{ steps.meta-dbboot.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
             PHP_VERSION=${{ matrix.php-version }}
+            OS_VERSION=${{ matrix.os-version }}
           tags: ${{ steps.meta-dbboot.outputs.tags }}
           
 
@@ -264,6 +276,7 @@ jobs:
             BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
             BASE_IMAGE_TAG=${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             PHP_VERSION=${{ matrix.php-version }}
+            OS_VERSION=${{ matrix.os-version }}
             CYPRESS_VERSION=
             PROD_DEBUG=TRUE
           tags: ${{ steps.meta-debug.outputs.tags }}
