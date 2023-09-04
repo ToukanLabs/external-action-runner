@@ -40,6 +40,8 @@ jobs:
         # populate commit message for merge commits
         # see https://currents.dev/readme/ci-setup/github-actions
         with:
+          repository: openeyes/openeyes
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
           ref: ${{ env.GITHUB_HEAD_SHA }}
 
       - name: Resolve ref
