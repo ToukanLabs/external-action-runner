@@ -1,3 +1,5 @@
+name: Cypress runner
+
 on:
   # This is triggered from a dispatch by the openeyes/openeyes repo
   repository_dispatch:
@@ -7,18 +9,17 @@ on:
 env:
   # This is the name of the branch that triggered the workflow
   BRANCH: ${{ github.event.client_payload.branch }}
-  GITHUB_REF_NAME: ${{ github.event.client_payload.message.GITHUB_REF_NAME }}
-  GITHUB_REF: ${{ github.event.client_payload.message.GITHUB_REF }}
-  GITHUB_HEAD_REF: ${{ github.event.client_payload.message.GITHUB_HEAD_REF }}
-  GITHUB_BASE_REF: ${{ github.event.client_payload.message.GITHUB_BASE_REF }}
-  GITHUB_HEAD_SHA: ${{ github.event.client_payload.message.GITHUB_HEAD_SHA }}
-  GITHUB_BASE_SHA: ${{ github.event.client_payload.message.GITHUB_BASE_SHA }}
-  GITHUB_PULL_REQUEST: ${{ github.event.client_payload.message.GITHUB_PULL_REQUEST }}
-  GITHUB_REPOSITORY: ${{ github.event.client_payload.message.GITHUB_REPOSITORY }}
-  GITHUB_RUN_ID: ${{ github.event.client_payload.message.GITHUB_RUN_ID }}
-  GITHUB_RUN_NUMBER: ${{ github.event.client_payload.message.GITHUB_RUN_NUMBER }}
-  GITHUB_RUN_ATTEMPT: ${{ github.event.client_payload.message.GITHUB_RUN_ATTEMPT }}
-
+  GITHUB_REF_NAME: ${{ github.event.client_payload.GITHUB_REF_NAME }}
+  GITHUB_REF: ${{ github.event.client_payload.GITHUB_REF }}
+  GITHUB_HEAD_REF: ${{ github.event.client_payload.GITHUB_HEAD_REF }}
+  GITHUB_BASE_REF: ${{ github.event.client_payload.GITHUB_BASE_REF }}
+  GITHUB_HEAD_SHA: ${{ github.event.client_payload.GITHUB_HEAD_SHA }}
+  GITHUB_BASE_SHA: ${{ github.event.client_payload.GITHUB_BASE_SHA }}
+  GITHUB_PULL_REQUEST: ${{ github.event.client_payload.GITHUB_PULL_REQUEST }}
+  GITHUB_REPOSITORY: ${{ github.event.client_payload.GITHUB_REPOSITORY }}
+  GITHUB_RUN_ID: ${{ github.event.client_payload.GITHUB_RUN_ID }}
+  GITHUB_RUN_NUMBER: ${{ github.event.client_payload.GITHUB_RUN_NUMBER }}
+  GITHUB_RUN_ATTEMPT: ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }}
 
 jobs:
   cypress-tests:
