@@ -48,8 +48,6 @@ jobs:
 
       - name: Run docker
         run: |
-          TESTS_TO_RUN=CURRENTS_CLOUD_SHORT CURRENTS_RECORD_KEY=${{ secrets.CURRENTS_RECORD_KEY }} PUID=$(id -u) SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}' BUILD_BRANCH=${{ env.GITHUB_REF }} BUILD_ID=${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt}} docker compose -f protected/tests/docker-compose.yml run --use-aliases web
-        run: |
           TESTS_TO_RUN=CURRENTS_CLOUD_SHORT
           CURRENTS_RECORD_KEY=${{ secrets.CURRENTS_RECORD_KEY }}
           PUID=$(id -u)
