@@ -8,7 +8,7 @@ on:
 
 env:
   # This is the name of the branch that triggered the workflow
-  BRANCH: ${{ github.event.client_payload.branch }}
+  BRANCH: ${{ github.event.client_payload.GITHUB_HEAD_REF }}
   GITHUB_REF_NAME: ${{ github.event.client_payload.GITHUB_REF_NAME }}
   GITHUB_REF: ${{ github.event.client_payload.GITHUB_REF }}
   GITHUB_HEAD_REF: ${{ github.event.client_payload.GITHUB_HEAD_REF }}
