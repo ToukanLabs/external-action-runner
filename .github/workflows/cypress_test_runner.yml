@@ -3,7 +3,7 @@ name: Cypress runner
 on:
   # This is triggered from a dispatch by the openeyes/openeyes repo
   repository_dispatch:
-    types: [pull_request, pull_request_syncronize, pull_request_reopened]
+    types: [Cypress_Run*]
 
 env:
   GITHUB_REF_NAME: ${{ github.event.client_payload.GITHUB_REF_NAME }}
