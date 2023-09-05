@@ -4,7 +4,6 @@ on:
   # This is triggered from a dispatch by the openeyes/openeyes repo
   repository_dispatch:
     types: [pull_request, pull_request_syncronize, pull_request_reopened]
-  workflow_dispatch:
 
 env:
   GITHUB_REF_NAME: ${{ github.event.client_payload.GITHUB_REF_NAME }}
@@ -22,12 +21,12 @@ env:
 jobs:
   cypress-tests:
     runs-on: ubuntu-latest
-    name: ${{ github.event.client_payload.GITHUB_REF_NAME }}
+    name: Cypress runner ${{ github.event.client_payload.GITHUB_REF_NAME }}
     strategy:
       fail-fast: false
       matrix:
         # run 3 copies of the current job in parallel
-        containers: [1, 2, 3]
+        containers: [1, 2, 3, 4]
     steps:
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
