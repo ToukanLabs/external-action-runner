@@ -55,6 +55,7 @@ jobs:
       - name: Write variables to compose .envfile
         run: |
           echo "CURRENTS_RECORD_KEY=${{ secrets.CURRENTS_RECORD_KEY }}" >> protected/tests/.env
+          echo "CURRENTS_PROJECT_ID=${{ secrets.CURRENTS_PROJECT_ID }}" >> protected/tests/.env
           echo "TESTS_TO_RUN=CURRENTS_CLOUD_SHORT" >> protected/tests/.env
           echo "PUID=$(id -u)" >> protected/tests/.env
           echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
@@ -64,12 +65,6 @@ jobs:
 
       - name: Run docker
         run: |
-          TESTS_TO_RUN=CURRENTS_CLOUD_SHORT \
-          CURRENTS_RECORD_KEY=${{ secrets.CURRENTS_RECORD_KEY }} \
-          PUID=$(id -u) \
-          SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}' \
-          BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }} \
-          BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}} \
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
 
       - name: Cancel the run if workflow is cancelled
