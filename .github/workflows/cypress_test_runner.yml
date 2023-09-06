@@ -21,7 +21,6 @@ env:
 jobs:
   cypress-tests:
     runs-on: ubuntu-latest
-    name: Cypress runner ${{ github.event.client_payload.GITHUB_REF_NAME }}
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +45,7 @@ jobs:
         with:
           repository: openeyes/openeyes
           ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
-          ref: ${{ env.GITHUB_HEAD_SHA }}
+          ref: ${{ env.GITHUB_HEAD_REF }}
 
       # - name: Resolve ref
       #   uses: rlespinasse/github-slug-action@v3.x
