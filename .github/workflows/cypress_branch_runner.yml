@@ -1,4 +1,4 @@
-name: Cypress runner
+name: Cypress branch runner
 
 on:
   workflow_dispatch:
