@@ -4,8 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch'
+        description: 'Branch to test'
         required: true
+      aoto-cancel-after-failures:
+        description: 'Auto cancel after number of failures (or false to disable)'
+        required: true
+        default: '10'
 
 env:
   GITHUB_HEAD_REF: ${{ github.event.inputs.branch }}
@@ -48,8 +52,7 @@ jobs:
           echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
           echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
           echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
-          echo "+++++++ DEBUG +++++++"
-          cat protected/tests/.env
+          echo "CYPRESS_FAIL_FAST_VALUE=${{ github.event.inputs.aoto-cancel-after-failures }}" >> protected/tests/.env
 
 
       - name: Run docker
