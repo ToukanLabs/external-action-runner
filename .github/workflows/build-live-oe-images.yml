@@ -52,7 +52,7 @@ jobs:
             modules: ''
             php-version: "7.4"
             os-version: "focal"
-            experimental: false
+            experimental: true
           - client-suffix: ''
             modules: ''
             php-version: "8.0"
@@ -74,7 +74,7 @@ jobs:
             modules: 'NewMedica'
             php-version: "7.4"
             os-version: "focal"
-            experimental: false
+            experimental: true
           - client-suffix: 'newmedica'
             modules: 'NewMedica'
             php-version: "8.0"
