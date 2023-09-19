@@ -53,6 +53,7 @@ jobs:
           echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
           echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
           echo "CYPRESS_FAIL_FAST_VALUE=${{ github.event.inputs.auto-cancel-after-failures }}" >> protected/tests/.env
+          echo "LOG_TO_BROWSER='error, warning, notice, info, debug'" >> protected/tests/.env
 
 
       - name: Run docker
