@@ -19,7 +19,7 @@ name: Publish OpenEyes LiveDocker images
 on:
   # This is triggered from a dispatch by the openeyes/openeyes repo
   repository_dispatch:
-    types: [build-oe-image*]
+    types: [build-oe-image_php8.0_*]
   workflow_dispatch:
 
 env:
@@ -50,31 +50,15 @@ jobs:
         include:
           - client-suffix: ''
             modules: ''
-            php-version: "7.4"
-            os-version: "focal"
-            experimental: true
-          - client-suffix: ''
-            modules: ''
             php-version: "8.0"
             os-version: "jammy"
             experimental: false
-          # - client-suffix: ''
-          #   modules: ''
-          #   php-version: "8.1"
-          #   os-version: "jammy"
-          #   experimental: true
-          # Client specific builds
           - client-suffix: 'meh'
             # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
             modules: 'OphLeEpatientletter,mehstaffdb,OphInMehPac'
             php-version: "8.0"
             os-version: "focal"
             experimental: false
-          - client-suffix: 'newmedica'
-            modules: 'NewMedica'
-            php-version: "7.4"
-            os-version: "focal"
-            experimental: true
           - client-suffix: 'newmedica'
             modules: 'NewMedica'
             php-version: "8.0"
