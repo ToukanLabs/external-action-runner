@@ -55,8 +55,9 @@ jobs:
           echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
           echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
           echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
-          echo "+++++++ DEBUG +++++++"
-          cat protected/tests/.env
+          echo "OE_DEFAULT_BRANCH=${{ env.GITHUB_BASE_REF }}" >> protected/tests/.env
+          # echo "+++++++ DEBUG +++++++"
+          # cat protected/tests/.env
 
 
       - name: Run docker
