@@ -20,6 +20,7 @@ env:
 
 jobs:
   cypress-tests:
+    name: Cypress tests - branch ${{ github.event.inputs.branch }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
