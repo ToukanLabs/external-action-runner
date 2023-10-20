@@ -1,4 +1,4 @@
-name: Cypress branch runner
+name: Cypress branch runner 
 
 on:
   workflow_dispatch:
@@ -10,6 +10,8 @@ on:
         description: 'Auto cancel after number of failures (or false to disable)'
         required: true
         default: '10'
+
+run-name: Cypress tests - branch ${{ github.event.inputs.branch }}
 
 env:
   GITHUB_HEAD_REF: ${{ github.event.inputs.branch }}
