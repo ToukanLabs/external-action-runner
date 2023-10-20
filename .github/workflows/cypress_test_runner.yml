@@ -18,6 +18,8 @@ env:
   GITHUB_RUN_NUMBER: ${{ github.event.client_payload.GITHUB_RUN_NUMBER }}
   GITHUB_RUN_ATTEMPT: ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }}
 
+run-name: Cypress - PR ${{ env.GITHUB_PULL_REQUEST }} - Attempt ${{ env.GITHUB_RUN_ATTEMPT }} - Run id ${{ env.GITHUB_RUN_NUMBER }}
+
 jobs:
   cypress-tests:
     runs-on: ubuntu-latest
