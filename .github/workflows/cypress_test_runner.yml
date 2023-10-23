@@ -18,7 +18,7 @@ env:
   GITHUB_RUN_NUMBER: ${{ github.event.client_payload.GITHUB_RUN_NUMBER }}
   GITHUB_RUN_ATTEMPT: ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }}
 
-run-name: Cypress - PR ${{ env.GITHUB_PULL_REQUEST }} - Attempt ${{ env.GITHUB_RUN_ATTEMPT }} - Run id ${{ env.GITHUB_RUN_NUMBER }}
+run-name: Cypress - PR ${{ github.event.client_payload.GITHUB_PULL_REQUEST }} - Attempt ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }} - Run id ${{ github.event.client_payload.GITHUB_RUN_ID }}
 
 jobs:
   cypress-tests:
