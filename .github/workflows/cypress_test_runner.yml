@@ -71,5 +71,5 @@ jobs:
         uses: currents-dev/cancel-run-gh-action@v1
         with:
           api-token: ${{ secrets.CURRENTS_API_KEY }}
-          github-run-id: ${{ env.GITHUB_RUN_ID }}
-          github-run-attempt: ${{ env.GITHUB_RUN_ATTEMPT}}
+          github-run-id: ${{ github.run_id }}
+          github-run-attempt: ${{ github.run_attempt }}
