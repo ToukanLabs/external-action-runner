@@ -60,14 +60,14 @@ jobs:
     steps:
       
       - name: Checkout OEBuilder
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ToukanLabs/OEImageBuilder
           ref: master
           ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
 
       - name: Setup SSH Agent
-        uses: webfactory/ssh-agent@v0.5.3
+        uses: webfactory/ssh-agent@v0.9.0
         with:
             ssh-private-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
 
@@ -101,13 +101,13 @@ jobs:
           GITHUB_REF_SLUG: ${{ env.GITHUB_REF_SLUG }}
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
         with:
           # driver: docker is required to allow images to be reused by subsequent steps
           driver: docker
@@ -150,7 +150,7 @@ jobs:
 ################
       # LIVE
       - name: Build LIVE image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
@@ -163,7 +163,7 @@ jobs:
           tags: ${{ steps.meta-live.outputs.tags }}
       # Manager
       - name: Build Manager image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
@@ -181,7 +181,7 @@ jobs:
       # DEBUG
         # (Debug images contain the same code as the live image, but include additional debugging tools and run in dev mode)
       - name: Build DEBUG image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
@@ -206,7 +206,7 @@ jobs:
 
       # LIVE
       - name: Push Live image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
@@ -221,7 +221,7 @@ jobs:
 
       # Manager
       - name: Push Manager image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
@@ -238,7 +238,7 @@ jobs:
           
 
       - name: Push DEBUG image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
