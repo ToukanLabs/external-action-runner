@@ -170,6 +170,7 @@ jobs:
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
             PHP_VERSION=${{ matrix.php-version }}
+            OS_VERSION=${{ matrix.os-version }}
             OE_VERSION=${{ steps.meta-live.outputs.slug }}${{ env.IMAGE_SUFFIX }}
           tags: ${{ steps.meta-live.outputs.tags }}
       # Manager
@@ -229,6 +230,7 @@ jobs:
             MODULES=${{ matrix.modules }}
             PHP_VERSION=${{ matrix.php-version }}
             OS_VERSION=${{ matrix.os-version }}
+            OE_VERSION=${{ steps.meta-live.outputs.slug }}${{ env.IMAGE_SUFFIX }}
           tags: ${{ steps.meta-live.outputs.tags }}
 
       # Manager
@@ -258,10 +260,11 @@ jobs:
           push: true
           # Note that BASE_IMAGE_TAG must use use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
           # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
-          build-args: |- 
+          build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
             BASE_IMAGE_TAG=${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
+            OE_VERSION=debug-${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             PHP_VERSION=${{ matrix.php-version }}
             OS_VERSION=${{ matrix.os-version }}
             CYPRESS_VERSION=
