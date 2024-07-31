@@ -66,7 +66,7 @@ jobs:
         run: |
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
 
-      - name: Cancel the run if workflow is cancelled
+      - name: Cancel Currents run if the workflow is cancelled
         if: ${{ cancelled() }}
         uses: currents-dev/cancel-run-gh-action@v1
         with:
