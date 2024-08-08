@@ -51,7 +51,7 @@ jobs:
           - client-suffix: ''
             modules: ''
             php-version: "7.4"
-            os-version: "focal"
+            os-version: "jammy"
             experimental: true
 
           

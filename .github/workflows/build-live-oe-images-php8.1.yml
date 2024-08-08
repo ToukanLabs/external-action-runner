@@ -57,7 +57,7 @@ jobs:
             # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
             modules: 'OphLeEpatientletter,mehstaffdb,OphInMehPac'
             php-version: "8.1"
-            os-version: "focal"
+            os-version: "jammy"
             experimental: false
           - client-suffix: 'newmedica'
             modules: 'NewMedica'
