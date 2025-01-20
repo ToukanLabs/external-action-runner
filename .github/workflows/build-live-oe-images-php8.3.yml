@@ -49,18 +49,18 @@ jobs:
         #   - a diffenerent PHP version
         include:
           - client-suffix: ''
-            modules: ''
+            modules: 'OEExceptionHandler'
             php-version: "8.3"
             os-version: "jammy"
             experimental: false
           - client-suffix: 'meh'
             # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
-            modules: 'OphLeEpatientletter,mehstaffdb,OphInMehPac'
+            modules: 'OEExceptionHandler,OphLeEpatientletter,mehstaffdb,OphInMehPac'
             php-version: "8.3"
             os-version: "jammy"
             experimental: false
           - client-suffix: 'newmedica'
-            modules: 'NewMedica'
+            modules: 'OEExceptionHandler,NewMedica'
             php-version: "8.3"
             os-version: "jammy"
             experimental: false
