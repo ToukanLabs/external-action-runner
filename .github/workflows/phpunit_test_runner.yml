@@ -56,6 +56,7 @@ jobs:
           repository: openeyes/openeyes
           ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
           ref: ${{ env.GITHUB_HEAD_REF }}
+        continue-on-error: true
 
       - name: Fallback to master branch if HEAD_REF fails
         if: ${{ env.GITHUB_REPOSITORY != 'openeyes/openeyes' && steps.checkout_openeyes.outcome == 'failure' }}
