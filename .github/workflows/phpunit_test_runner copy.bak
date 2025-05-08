@@ -12,7 +12,7 @@ env:
   GITHUB_HEAD_SHA: ${{ github.event.client_payload.GITHUB_HEAD_SHA }}
   GITHUB_BASE_SHA: ${{ github.event.client_payload.GITHUB_BASE_SHA }}
   GITHUB_PULL_REQUEST: ${{ github.event.client_payload.GITHUB_PULL_REQUEST }}
-  GITHUB_REPOSITORY: 'openeyes/openeyes'
+  GITHUB_REPOSITORY: ${{ github.event.client_payload.GITHUB_REPOSITORY || 'openeyes/openeyes' }}
   GITHUB_RUN_ID: ${{ github.event.client_payload.GITHUB_RUN_ID }}
   GITHUB_RUN_NUMBER: ${{ github.event.client_payload.GITHUB_RUN_NUMBER }}
   GITHUB_RUN_ATTEMPT: ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }}
@@ -41,6 +41,38 @@ jobs:
           repository: ${{ env.GITHUB_REPOSITORY }}
           ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
           ref: ${{ env.GITHUB_HEAD_REF }}
+
+      - name: Create folder for openeyes repository
+        if: ${{ env.GITHUB_REPOSITORY != 'openeyes/openeyes' }}
+        run: |
+          mkdir openeyes-folder
+          cd openeyes-folder
+
+      - name: Checkout openeyes repository if not already checked out
+        id: checkout_openeyes
+        if: ${{ env.GITHUB_REPOSITORY != 'openeyes/openeyes' }}
+        uses: actions/checkout@v4
+        with:
+          repository: openeyes/openeyes
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+          ref: ${{ env.GITHUB_HEAD_REF }}
+        continue-on-error: true
+
+      - name: Fallback to master branch if HEAD_REF fails
+        if: ${{ env.GITHUB_REPOSITORY != 'openeyes/openeyes' && steps.checkout_openeyes.outcome == 'failure' }}
+        run: |
+          cd ..  
+          rm -rf openeyes-folder
+          mkdir openeyes-folder
+          cd openeyes-folder
+
+      - name: Retry Checkout with master branch
+        if: ${{ env.GITHUB_REPOSITORY != 'openeyes/openeyes' && steps.checkout_openeyes.outcome == 'failure' }}
+        uses: actions/checkout@v4
+        with:
+          repository: openeyes/openeyes
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+          ref: master
 
       # write environment variables to a docker compose .env file
       - name: Write variables to compose .env file
