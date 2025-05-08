@@ -1,9 +1,8 @@
-name: Cypress runner
+name: PHPUnit test runner 
 
 on:
-  # This is triggered from a dispatch by the openeyes/openeyes repo
   repository_dispatch:
-    types: [cypress_run*]
+    types: [phpunit_run*]
 
 env:
   GITHUB_REF_NAME: ${{ github.event.client_payload.GITHUB_REF_NAME }}
@@ -13,24 +12,23 @@ env:
   GITHUB_HEAD_SHA: ${{ github.event.client_payload.GITHUB_HEAD_SHA }}
   GITHUB_BASE_SHA: ${{ github.event.client_payload.GITHUB_BASE_SHA }}
   GITHUB_PULL_REQUEST: ${{ github.event.client_payload.GITHUB_PULL_REQUEST }}
-  GITHUB_REPOSITORY: ${{ github.event.client_payload.GITHUB_REPOSITORY || 'openeyes/openeyes' }} 
+  GITHUB_REPOSITORY: ${{ github.event.client_payload.GITHUB_REPOSITORY || 'openeyes/openeyes' }}
   GITHUB_RUN_ID: ${{ github.event.client_payload.GITHUB_RUN_ID }}
   GITHUB_RUN_NUMBER: ${{ github.event.client_payload.GITHUB_RUN_NUMBER }}
   GITHUB_RUN_ATTEMPT: ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }}
-
-run-name: Cypress - PR ${{ github.event.client_payload.GITHUB_PULL_REQUEST }} - Attempt ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }} - Run id ${{ github.event.client_payload.GITHUB_RUN_ID }}
-
+  ADDITIONAL_MODULES: ${{ github.event.client_payload.additional_modules || '' }}
+  
 jobs:
-  cypress-tests:
+  phpunit-tests:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        # run multiple copies of the current job in parallel
-        containers: [1, 2, 3, 4, 5, 6]
+        # run different test types in parallel
+        test-type: [PHPUNIT-SAMPLE, PHPUNIT-FIXTURES]
     steps:
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -44,32 +42,28 @@ jobs:
           ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
           ref: ${{ env.GITHUB_HEAD_REF }}
 
-      # - name: Resolve ref
-      #   uses: rlespinasse/github-slug-action@v3.x
+      - name: Conditional Checkout for non openeyes/openeyes repos
+        if: ${{ env.GITHUB_REPOSITORY != 'openeyes/openeyes' }}
+        run: |
+          # Clone the same branch/tag as the calling repo. Fallback to master if no match is found
+          git clone --branch ${{ env.GITHUB_HEAD_REF }} git@github.com:openeyes/openeyes.git openeyes-folder || \
+          git clone --branch master git@github.com:openeyes/openeyes.git openeyes-folder
+          cd openeyes-folder
+          # Execute subsequent steps from this folder
+          echo "Switched to openeyes-folder for further steps."
 
       # write environment variables to a docker compose .env file
-      - name: Write variables to compose .envfile
+      - name: Write variables to compose .env file
         run: |
-          echo "CURRENTS_RECORD_KEY=${{ secrets.CURRENTS_RECORD_KEY }}" >> protected/tests/.env
-          echo "CURRENTS_PROJECT_ID=${{ secrets.CURRENTS_PROJECT_ID }}" >> protected/tests/.env
-          echo "TESTS_TO_RUN=CURRENTS_CLOUD_SHORT" >> protected/tests/.env
+          echo "TESTS_TO_RUN=${{ matrix.test-type }}" >> protected/tests/.env
           echo "PUID=$(id -u)" >> protected/tests/.env
           echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
           echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
           echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
-          echo "OE_DEFAULT_BRANCH=${{ env.GITHUB_BASE_REF }}" >> protected/tests/.env
-          # echo "+++++++ DEBUG +++++++"
-          # cat protected/tests/.env
-
+          if [ -n "${{ env.ADDITIONAL_MODULES }}" ]; then
+            echo "MODULES=${{ env.ADDITIONAL_MODULES }}" >> protected/tests/.env
+          fi
 
       - name: Run docker
         run: |
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
-
-      - name: Cancel Currents run if the workflow is cancelled
-        if: ${{ cancelled() }}
-        uses: currents-dev/cancel-run-gh-action@v1
-        with:
-          api-token: ${{ secrets.CURRENTS_API_KEY }}
-          github-run-id: ${{ github.run_id }}
-          github-run-attempt: ${{ github.run_attempt }}
