@@ -42,15 +42,37 @@ jobs:
           ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
           ref: ${{ env.GITHUB_HEAD_REF }}
 
-      - name: Conditional Checkout for non openeyes/openeyes repos
+      - name: Create folder for openeyes repository
         if: ${{ env.GITHUB_REPOSITORY != 'openeyes/openeyes' }}
         run: |
-          # Clone the same branch/tag as the calling repo. Fallback to master if no match is found
-          git clone --branch ${{ env.GITHUB_HEAD_REF }} git@github.com:openeyes/openeyes.git openeyes-folder || \
-          git clone --branch master git@github.com:openeyes/openeyes.git openeyes-folder
+          mkdir openeyes-folder
           cd openeyes-folder
-          # Execute subsequent steps from this folder
-          echo "Switched to openeyes-folder for further steps."
+
+      - name: Checkout openeyes repository if not already checked out
+        id: checkout_openeyes
+        if: ${{ env.GITHUB_REPOSITORY != 'openeyes/openeyes' }}
+        uses: actions/checkout@v4
+        with:
+          repository: openeyes/openeyes
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+          ref: ${{ env.GITHUB_HEAD_REF }}
+
+      - name: Fallback to master branch if HEAD_REF fails
+        if: ${{ env.GITHUB_REPOSITORY != 'openeyes/openeyes' && steps.checkout_openeyes.outcome == 'failure' }}
+        run: |
+          cd ..  
+          rm -rf openeyes-folder
+          mkdir openeyes-folder
+          cd openeyes-folder
+
+      - name: Retry Checkout with master branch
+        if: ${{ env.GITHUB_REPOSITORY != 'openeyes/openeyes' && steps.checkout_openeyes.outcome == 'failure' }}
+        uses: actions/checkout@v4
+        with:
+          repository: openeyes/openeyes
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+          ref: master
+          path: openeyes-folder
 
       # write environment variables to a docker compose .env file
       - name: Write variables to compose .env file
