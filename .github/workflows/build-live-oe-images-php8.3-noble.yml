@@ -24,7 +24,6 @@ on:
 
 env:
   PRIMARY_PHP_VERSION: "8.3"
-  PRIMARY_OS_VERSION: "jammy"
   DOCKER_ORG: "toukanlabsdocker"
   DOCKER_WEB_IMAGE: "oe-web-live"
   DOCKER_MANAGER_IMAGE: "oe-manager"
@@ -86,14 +85,12 @@ jobs:
         id: setsuffix
         shell: bash
         run: |
-          if [ -n "$CLIENT_SUFFIX" ] || [ -n "$PHP_VERSION" ] || [ -n "$OS_VERSION" ]; then       
+          if [ -n "$CLIENT_SUFFIX" ] || [ -n "$PHP_VERSION" ]; then       
             # Set client prefix if specified
             [ -n "$CLIENT_SUFFIX" ] && IMAGE_SUFFIX="$IMAGE_SUFFIX-$CLIENT_SUFFIX" || :
             
             # set php version prefix if specified. Do not set a prefix if this is the primary version
             [[ -n "$PHP_VERSION" && "$PHP_VERSION" != "$PRIMARY_PHP_VERSION" ]] && IMAGE_SUFFIX="$IMAGE_SUFFIX-php$PHP_VERSION" || :
-            # set os version prefix if specified. Do not set a prefix if this is the primary version
-            [[ -n "$OS_VERSION" && "$OS_VERSION" != "$PRIMARY_OS_VERSION" ]] && IMAGE_SUFFIX="$IMAGE_SUFFIX-$OS_VERSION" || :
             
             if [ -n "$IMAGE_SUFFIX" ]; then
               echo "{hassuffix}=${{ toJSON(true) }}" >> $GITHUB_OUTPUT
@@ -111,7 +108,6 @@ jobs:
           OS_VERSION: ${{ matrix.os-version }}
           IMAGE_SUFFIX: ${{ env.IMAGE_SUFFIX }}
           PRIMARY_PHP_VERSION: ${{ env.PRIMARY_PHP_VERSION }}
-          PRIMARY_OS_VERSION: ${{ env.PRIMARY_OS_VERSION }}
           GITHUB_REF_SLUG: ${{ env.GITHUB_REF_SLUG }}
 
       - name: Log in to Docker Hub
