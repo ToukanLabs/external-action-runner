@@ -1,4 +1,4 @@
-name: Publish OE Docker images (PHP8.3)
+name: Publish OE images (PHP8.3-jammy)
 
 ## Builds deployable images for the OE application.
 ## For production scenarios, always try to tag the repo, which will create a tagged image
