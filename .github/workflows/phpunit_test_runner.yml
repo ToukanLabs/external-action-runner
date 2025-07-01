@@ -17,12 +17,14 @@ env:
   GITHUB_RUN_NUMBER: ${{ github.event.client_payload.GITHUB_RUN_NUMBER }}
   GITHUB_RUN_ATTEMPT: ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }}
   ADDITIONAL_MODULES: ${{ github.event.client_payload.additional_modules || '' }}
-  
+
+run-name: PHPUnit - PR ${{ github.event.client_payload.GITHUB_PULL_REQUEST }} - Attempt ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }} - Run id ${{ github.event.client_payload.GITHUB_RUN_ID }}
+
 jobs:
   phpunit-tests:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         # run different test types in parallel
         test-type: [PHPUNIT-SAMPLE, PHPUNIT-FIXTURES]
