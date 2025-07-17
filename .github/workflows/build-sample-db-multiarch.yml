@@ -1,0 +1,176 @@
+name: Publish Multi-Arch Docker image
+
+on:
+  # This is triggered from a dispatch by the openeyes/openeyes repo
+  repository_dispatch:
+    types: [build-oe-sample-db_*]
+  workflow_dispatch:
+
+env:
+  DOCKER_ORG: toukanlabsdocker
+  DOCKER_IMAGE: oe-sample-db
+  IMAGE_SUFFIX: ""
+  # The next 2 come from the dispatch action, which uses rlespinasse/github-slug-action to generate the refs
+  GITHUB_REF_SLUG: ${{ github.event.client_payload.message.GITHUB_REF_SLUG }}
+  GITHUB_REF_NAME: ${{ github.event.client_payload.message.GITHUB_REF_NAME }}
+
+jobs:
+  build-and-push:
+    name: Build and Push ${{ matrix.db-image }}:${{ matrix.db-image-version }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - db-image: "mariadb"
+            db-image-version: "10.11"
+            primary: true
+            runner: ubuntu-latest
+            arch: amd64
+            platform: linux/amd64
+          - db-image: "mariadb"
+            db-image-version: "10.11"
+            primary: true
+            runner: ubuntu-latest-arm64
+            arch: arm64
+            platform: linux/arm64
+
+          - db-image: "mysql"
+            db-image-version: "8.0"
+            primary: false
+            runner: ubuntu-latest
+            arch: amd64
+            platform: linux/amd64
+          - db-image: "mysql"
+            db-image-version: "8.0"
+            primary: false
+            runner: ubuntu-latest-arm64
+            arch: arm64
+            platform: linux/arm64
+
+          - db-image: "mariadb"
+            db-image-version: "11.8"
+            primary: false
+            runner: ubuntu-latest
+            arch: amd64
+            platform: linux/amd64
+          - db-image: "mariadb"
+            db-image-version: "11.8"
+            primary: false
+            runner: ubuntu-latest-arm64
+            arch: arm64
+            platform: linux/arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: openeyes/sample
+          ref: ${{ env.GITHUB_REF_NAME }}
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Setup Docker metadata tags (arch-specific)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
+          flavor: |
+            latest=${{ contains(env.GITHUB_REF_NAME,'refs/heads/master') && matrix.primary }}
+          tags: |
+            type=ref,event=branch,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,suffix=-${{ matrix.arch }}
+            type=ref,event=tag,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,suffix=-${{ matrix.arch }}
+            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{version}},suffix=-${{ matrix.arch }}
+            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}}.{{minor}},suffix=-${{ matrix.arch }}
+            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}},suffix=-${{ matrix.arch }}
+            type=ref,event=branch,enable=${{ matrix.primary }},suffix=-${{ matrix.arch }}
+            type=ref,event=tag,enable=${{ matrix.primary }},suffix=-${{ matrix.arch }}
+            type=semver,enable=${{ matrix.primary }},pattern={{version}},suffix=-${{ matrix.arch }}
+            type=semver,enable=${{ matrix.primary }},pattern={{major}}.{{minor}},suffix=-${{ matrix.arch }}
+            type=semver,enable=${{ matrix.primary }},pattern={{major}},suffix=-${{ matrix.arch }}
+
+      - name: Build and push image for ${{ matrix.platform }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            MYSQLIMAGENAME=${{ matrix.db-image }}:${{ matrix.db-image-version }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ matrix.platform }}
+
+  manifest:
+    name: Create and Push Multi-Arch Manifests
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - db-image: "mariadb"
+            db-image-version: "10.11"
+            primary: true
+          - db-image: "mysql"
+            db-image-version: "8.0"
+            primary: false
+          - db-image: "mariadb"
+            db-image-version: "11.8"
+            primary: false
+
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Setup Docker metadata tags (multi-arch)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
+          flavor: |
+            latest=${{ contains(github.ref,'refs/heads/master') && matrix.primary }}
+          tags: |
+            type=ref,event=branch,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-
+            type=ref,event=tag,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-
+            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{version}}
+            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}}.{{minor}}
+            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}}
+            type=ref,event=branch,enable=${{ matrix.primary }}
+            type=ref,event=tag,enable=${{ matrix.primary }}
+            type=semver,enable=${{ matrix.primary }},pattern={{version}}
+            type=semver,enable=${{ matrix.primary }},pattern={{major}}.{{minor}}
+            type=semver,enable=${{ matrix.primary }},pattern={{major}}
+
+      - name: Create and push multi-arch manifests for all tags
+        run: |
+          for tag in ${{ steps.meta.outputs.tags }}; do
+            docker manifest create $tag \
+              --amend $tag-amd64 \
+              --amend $tag-arm64
+            docker manifest push $tag
+          done
+
+  update-docker-hub-description:
+    name: Update docker hub description
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: toukanlabsdocker/oe-sample-db
