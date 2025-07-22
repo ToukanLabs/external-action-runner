@@ -1,4 +1,4 @@
-name: Publish Multi-Arch Docker image
+name: Sample DB - Build image
 
 on:
   # This is triggered from a dispatch by the openeyes/openeyes repo
@@ -32,7 +32,7 @@ jobs:
           - db-image: "mariadb"
             db-image-version: "10.11"
             primary: true
-            runner: ubuntu-latest-arm64
+            runner: Linux_ARM
             arch: arm64
             platform: linux/arm64
 
@@ -42,13 +42,6 @@ jobs:
             runner: ubuntu-latest
             arch: amd64
             platform: linux/amd64
-          - db-image: "mysql"
-            db-image-version: "8.0"
-            primary: false
-            runner: ubuntu-latest-arm64
-            arch: arm64
-            platform: linux/arm64
-
           - db-image: "mariadb"
             db-image-version: "11.8"
             primary: false
@@ -58,7 +51,13 @@ jobs:
           - db-image: "mariadb"
             db-image-version: "11.8"
             primary: false
-            runner: ubuntu-latest-arm64
+            runner: ubuntu-latest
+            arch: arm64
+            platform: linux/arm64
+          - db-image: "mariadb"
+            db-image-version: "11.8.2"
+            primary: false
+            runner: macos-latest
             arch: arm64
             platform: linux/arm64
 
