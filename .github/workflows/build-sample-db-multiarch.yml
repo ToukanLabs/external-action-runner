@@ -84,11 +84,6 @@ jobs:
             type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{version}},suffix=-${{ matrix.arch }}
             type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}}.{{minor}},suffix=-${{ matrix.arch }}
             type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}},suffix=-${{ matrix.arch }}
-            type=ref,event=branch,enable=${{ matrix.primary }},suffix=-${{ matrix.arch }}
-            type=ref,event=tag,enable=${{ matrix.primary }},suffix=-${{ matrix.arch }}
-            type=semver,enable=${{ matrix.primary }},pattern={{version}},suffix=-${{ matrix.arch }}
-            type=semver,enable=${{ matrix.primary }},pattern={{major}}.{{minor}},suffix=-${{ matrix.arch }}
-            type=semver,enable=${{ matrix.primary }},pattern={{major}},suffix=-${{ matrix.arch }}
 
       - name: Build and push image for ${{ matrix.platform }}
         uses: docker/build-push-action@v6
@@ -97,7 +92,9 @@ jobs:
           push: true
           build-args: |
             MYSQLIMAGENAME=${{ matrix.db-image }}:${{ matrix.db-image-version }}
-          tags: ${{ steps.meta.outputs.tags }}
+          # Only push arch-specific tags, not the generic tag
+          tags: |
+            ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}:${{ matrix.db-image }}_${{ matrix.db-image-version }}-${{ matrix.arch }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ matrix.platform }}
 
