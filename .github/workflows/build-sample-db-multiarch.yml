@@ -77,7 +77,7 @@ jobs:
         with:
           images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
           flavor: |
-            latest=${{ contains(env.GITHUB_REF_NAME,'refs/heads/master') && matrix.primary }}
+            latest=${{ contains(env.GITHUB_REF_NAME,'refs/heads/master') && matrix.primary && matrix.arch == 'amd64' }}
           tags: |
             type=ref,event=branch,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,suffix=-${{ matrix.arch }}
             type=ref,event=tag,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,suffix=-${{ matrix.arch }}
@@ -132,7 +132,7 @@ jobs:
             latest=${{ contains(github.ref,'refs/heads/master') && matrix.primary }}
           tags: |
             type=ref,event=branch,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-
-            type=ref,event=tag,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-
+            type=ref,event=tag,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}
             type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{version}}
             type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}}.{{minor}}
             type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}}
