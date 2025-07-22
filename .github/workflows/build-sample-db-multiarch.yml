@@ -23,6 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # NOTE that Linux_ARM is a custom runner in github actions for TKL org
           - db-image: "mariadb"
             db-image-version: "10.11"
             primary: true
@@ -35,7 +36,6 @@ jobs:
             runner: Linux_ARM
             arch: arm64
             platform: linux/arm64
-
           - db-image: "mysql"
             db-image-version: "8.0"
             primary: false
@@ -51,13 +51,7 @@ jobs:
           - db-image: "mariadb"
             db-image-version: "11.8"
             primary: false
-            runner: ubuntu-latest
-            arch: arm64
-            platform: linux/arm64
-          - db-image: "mariadb"
-            db-image-version: "11.8.2"
-            primary: false
-            runner: macos-latest
+            runner: Linux_ARM
             arch: arm64
             platform: linux/arm64
 
