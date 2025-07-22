@@ -12,7 +12,7 @@ env:
   GITHUB_HEAD_SHA: ${{ github.event.client_payload.GITHUB_HEAD_SHA }}
   GITHUB_BASE_SHA: ${{ github.event.client_payload.GITHUB_BASE_SHA }}
   GITHUB_PULL_REQUEST: ${{ github.event.client_payload.GITHUB_PULL_REQUEST }}
-  GITHUB_REPOSITORY: ${{ github.event.client_payload.GITHUB_REPOSITORY || 'openeyes/openeyes' }}
+  GITHUB_REPOSITORY: 'openeyes/openeyes'
   GITHUB_RUN_ID: ${{ github.event.client_payload.GITHUB_RUN_ID }}
   GITHUB_RUN_NUMBER: ${{ github.event.client_payload.GITHUB_RUN_NUMBER }}
   GITHUB_RUN_ATTEMPT: ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }}
