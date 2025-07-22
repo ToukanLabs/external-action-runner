@@ -146,6 +146,14 @@ jobs:
             type=semver,enable=${{ matrix.primary }},pattern={{major}}.{{minor}}
             type=semver,enable=${{ matrix.primary }},pattern={{major}}
 
+      - name: Remove existing manifest lists (ignore errors)
+        run: |
+          echo "${{ steps.meta.outputs.tags }}" | while read tag; do
+            docker manifest rm "$tag" || true
+            docker manifest rm "$tag-amd64" || true
+            docker manifest rm "$tag-arm64" || true
+          done
+
       - name: Create and push multi-arch manifests for all tags
         run: |
           echo "${{ steps.meta.outputs.tags }}" | while read tag; do
