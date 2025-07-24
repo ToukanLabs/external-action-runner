@@ -77,6 +77,7 @@ jobs:
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
+          prefix: ${{ matrix.db-image }}-${{ matrix.db-image-version }}
           suffix: ${{ env.IMAGE_SUFFIX }}
           arch: ${{ matrix.arch }}
           allow-latest-tag: false
@@ -125,6 +126,7 @@ jobs:
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
+          prefix: ${{ matrix.db-image }}-${{ matrix.db-image-version }}
           suffix: ${{ env.IMAGE_SUFFIX }}
           allow-latest-tag: false
           docker-user: ${{ secrets.DOCKER_USERNAME }}
