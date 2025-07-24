@@ -73,14 +73,15 @@ jobs:
 
       - name: Setup Docker metadata tags (arch-specific)
         id: meta
-        uses: toukanlabs/build-tag-gen@v5
+        uses: toukanlabs/build-tag-gen@v6
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
           prefix: ${{ matrix.db-image }}-${{ matrix.db-image-version }}
           suffix: ${{ env.IMAGE_SUFFIX }}
           arch: ${{ matrix.arch }}
-          allow-latest-tag: false
+          allow-latest-tag: true
+          is-primary: ${{ matrix.primary }}
           docker-user: ${{ secrets.DOCKER_USERNAME }}
           docker-pass: ${{ secrets.DOCKER_PASSWORD }}
 
@@ -131,13 +132,14 @@ jobs:
 
       - name: Setup Docker metadata tags (multi-arch)
         id: meta
-        uses: toukanlabs/build-tag-gen@v5
+        uses: toukanlabs/build-tag-gen@v6
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
           prefix: ${{ matrix.db-image }}-${{ matrix.db-image-version }}
           suffix: ${{ env.IMAGE_SUFFIX }}
-          allow-latest-tag: false
+          allow-latest-tag: true
+          is-primary: ${{ matrix.primary }}
           docker-user: ${{ secrets.DOCKER_USERNAME }}
           docker-pass: ${{ secrets.DOCKER_PASSWORD }}
 
