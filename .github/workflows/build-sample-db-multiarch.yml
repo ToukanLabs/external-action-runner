@@ -92,8 +92,8 @@ jobs:
           build-args: |
             MYSQLIMAGENAME=${{ matrix.db-image }}:${{ matrix.db-image-version }}
           tags: ${{ steps.meta.outputs.tags }}
-          # platforms: ${{ matrix.platform }}
-          outputs: type=image,push=true
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ steps.meta.outputs.tags }},push=true
 
   manifest:
     name: Create and Push Multi-Arch Manifests
