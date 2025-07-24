@@ -163,6 +163,7 @@ jobs:
 
   update-docker-hub-description:
     name: Update docker hub description
+    needs: manifest
     runs-on: ubuntu-latest
     steps:
       - name: Check out
