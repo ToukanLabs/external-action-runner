@@ -90,10 +90,7 @@ jobs:
           push: true
           build-args: |
             MYSQLIMAGENAME=${{ matrix.db-image }}:${{ matrix.db-image-version }}
-          # Only push arch-specific tags, not the generic tag
-          tags: |
-            ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}:${{ matrix.db-image }}_${{ matrix.db-image-version }}-${{ matrix.arch }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
           platforms: ${{ matrix.platform }}
 
   manifest:
