@@ -73,17 +73,15 @@ jobs:
 
       - name: Setup Docker metadata tags (arch-specific)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: toukanlabs/build-tag-gen@v5
         with:
-          images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
-          flavor: |
-            latest=${{ contains(env.GITHUB_REF_NAME,'refs/heads/master') && matrix.primary && matrix.arch == 'amd64' }}
-          tags: |
-            type=ref,event=branch,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,suffix=-${{ matrix.arch }}
-            type=ref,event=tag,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,suffix=-${{ matrix.arch }}
-            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{version}},suffix=-${{ matrix.arch }}
-            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}}.{{minor}},suffix=-${{ matrix.arch }}
-            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}},suffix=-${{ matrix.arch }}
+          image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
+          slug: ${{ env.GITHUB_REF_SLUG }}
+          suffix: ${{ env.IMAGE_SUFFIX }}
+          arch: ${{ matrix.arch }}
+          allow-latest-tag: false
+          docker-user: ${{ secrets.DOCKER_USERNAME }}
+          docker-pass: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push image for ${{ matrix.platform }}
         uses: docker/build-push-action@v6
@@ -125,22 +123,14 @@ jobs:
 
       - name: Setup Docker metadata tags (multi-arch)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: toukanlabs/build-tag-gen@v5
         with:
-          images: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
-          flavor: |
-            latest=${{ contains(github.ref,'refs/heads/master') && matrix.primary }}
-          tags: |
-            type=ref,event=branch,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-
-            type=ref,event=tag,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}
-            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{version}}
-            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}}.{{minor}}
-            type=semver,prefix=${{ matrix.db-image }}_${{ matrix.db-image-version }}-,pattern={{major}}
-            type=ref,event=branch,enable=${{ matrix.primary }}
-            type=ref,event=tag,enable=${{ matrix.primary }}
-            type=semver,enable=${{ matrix.primary }},pattern={{version}}
-            type=semver,enable=${{ matrix.primary }},pattern={{major}}.{{minor}}
-            type=semver,enable=${{ matrix.primary }},pattern={{major}}
+          image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
+          slug: ${{ env.GITHUB_REF_SLUG }}
+          suffix: ${{ env.IMAGE_SUFFIX }}
+          allow-latest-tag: false
+          docker-user: ${{ secrets.DOCKER_USERNAME }}
+          docker-pass: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Remove existing manifest lists (ignore errors)
         run: |
