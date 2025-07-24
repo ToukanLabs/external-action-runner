@@ -100,8 +100,8 @@ jobs:
           ARCH: ${{ matrix.arch }}
         run: |
           for tag in $TAGS; do
-            docker tag tempimage:${ARCH} "$tag-${ARCH}"
-            docker push "$tag-${ARCH}"
+            docker tag tempimage:${ARCH} "$tag"
+            docker push "$tag"
           done
 
   manifest:
