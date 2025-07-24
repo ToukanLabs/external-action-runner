@@ -35,24 +35,24 @@ jobs:
             runner: ubuntu-24.04-arm
             arch: arm64
             platform: linux/arm64
-          - db-image: "mysql"
-            db-image-version: "8.0"
-            primary: false
-            runner: ubuntu-latest
-            arch: amd64
-            platform: linux/amd64
-          - db-image: "mariadb"
-            db-image-version: "11.8"
-            primary: false
-            runner: ubuntu-latest
-            arch: amd64
-            platform: linux/amd64
-          - db-image: "mariadb"
-            db-image-version: "11.8"
-            primary: false
-            runner: ubuntu-24.04-arm
-            arch: arm64
-            platform: linux/arm64
+          # - db-image: "mysql"
+          #   db-image-version: "8.0"
+          #   primary: false
+          #   runner: ubuntu-latest
+          #   arch: amd64
+          #   platform: linux/amd64
+          # - db-image: "mariadb"
+          #   db-image-version: "11.8"
+          #   primary: false
+          #   runner: ubuntu-latest
+          #   arch: amd64
+          #   platform: linux/amd64
+          # - db-image: "mariadb"
+          #   db-image-version: "11.8"
+          #   primary: false
+          #   runner: ubuntu-24.04-arm
+          #   arch: arm64
+          #   platform: linux/arm64
 
     steps:
       - name: Checkout
@@ -92,7 +92,7 @@ jobs:
           build-args: |
             MYSQLIMAGENAME=${{ matrix.db-image }}:${{ matrix.db-image-version }}
           tags: ${{ steps.meta.outputs.tags }}
-          platforms: ${{ matrix.platform }}
+          # platforms: ${{ matrix.platform }}
           outputs: type=image,push=true
 
   manifest:
@@ -106,12 +106,12 @@ jobs:
           - db-image: "mariadb"
             db-image-version: "10.11"
             primary: true
-          - db-image: "mysql"
-            db-image-version: "8.0"
-            primary: false
-          - db-image: "mariadb"
-            db-image-version: "11.8"
-            primary: false
+          # - db-image: "mysql"
+          #   db-image-version: "8.0"
+          #   primary: false
+          # - db-image: "mariadb"
+          #   db-image-version: "11.8"
+          #   primary: false
 
     steps:
       - name: Log in to Docker Hub
