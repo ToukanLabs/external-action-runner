@@ -102,8 +102,10 @@ jobs:
         run: |
           echo "$TAGS" | while read -r tag; do
             [ -z "$tag" ] && continue
+            echo "::group:: Tagging with $tag"
             docker tag tempimage:${ARCH} "$tag"
             docker push "$tag"
+            echo "::endgroup::"
           done
 
   manifest:
