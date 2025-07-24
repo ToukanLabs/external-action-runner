@@ -100,7 +100,8 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
           ARCH: ${{ matrix.arch }}
         run: |
-          for tag in $TAGS; do
+          echo "$TAGS" | while read -r tag; do
+            [ -z "$tag" ] && continue
             docker tag tempimage:${ARCH} "$tag"
             docker push "$tag"
           done
