@@ -84,16 +84,25 @@ jobs:
           docker-user: ${{ secrets.DOCKER_USERNAME }}
           docker-pass: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push image for ${{ matrix.platform }}
+      - name: Build image for ${{ matrix.platform }}
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
+          load: true
           build-args: |
             MYSQLIMAGENAME=${{ matrix.db-image }}:${{ matrix.db-image-version }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: tempimage:${{ matrix.arch }}
           platforms: ${{ matrix.platform }}
-          outputs: type=image,name=${{ steps.meta.outputs.tags }},push=true
+
+      - name: Tag and push all tags for ${{ matrix.platform }}
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          for tag in $TAGS; do
+            docker tag tempimage:${ARCH} "$tag-${ARCH}"
+            docker push "$tag-${ARCH}"
+          done
 
   manifest:
     name: Create and Push Multi-Arch Manifests
