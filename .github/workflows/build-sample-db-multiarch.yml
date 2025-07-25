@@ -90,7 +90,7 @@ jobs:
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
-          prefix: ${{ matrix.db-image }}-${{ matrix.db-image-version }}
+          prefix: ${{ matrix.db-image }}_${{ matrix.db-image-version }}
           suffix: ${{ env.IMAGE_SUFFIX }}
           arch: ${{ matrix.arch }}
           allow-latest-tag: true
@@ -152,7 +152,7 @@ jobs:
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
-          prefix: ${{ matrix.db-image }}-${{ matrix.db-image-version }}
+          prefix: ${{ matrix.db-image }}_${{ matrix.db-image-version }}
           suffix: ${{ env.IMAGE_SUFFIX }}
           allow-latest-tag: true
           is-primary: ${{ matrix.primary }}
@@ -170,9 +170,16 @@ jobs:
       - name: Create and push multi-arch manifests for all tags
         run: |
           echo "${{ steps.meta.outputs.tags }}" | while read tag; do
-            docker manifest create "$tag" \
-              --amend "$tag-amd64" \
-              --amend "$tag-arm64"
+            # Check which arch images exist
+            ARCHES=()
+            docker manifest inspect "$tag-amd64" >/dev/null 2>&1 && ARCHES+=("--amend $tag-amd64")
+            docker manifest inspect "$tag-arm64" >/dev/null 2>&1 && ARCHES+=("--amend $tag-arm64")
+            if [ ${#ARCHES[@]} -eq 0 ]; then
+              echo "No arch images found for $tag, skipping."
+              continue
+            fi
+            echo "Creating manifest for $tag with: ${ARCHES[*]}"
+            docker manifest create "$tag" ${ARCHES[*]}
             docker manifest push "$tag"
           done
 
