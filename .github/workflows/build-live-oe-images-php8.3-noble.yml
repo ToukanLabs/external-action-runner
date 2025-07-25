@@ -120,9 +120,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          # driver: docker is required to allow images to be reused by subsequent steps
-          driver: docker
 
 ########### Setup tags for each image
 
