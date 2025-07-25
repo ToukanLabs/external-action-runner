@@ -121,6 +121,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # github runner may run out of space during builds, so we clean up some space
+      - name: Free disk space on GitHub runner
+        run: |
+          echo "Before cleanup:"
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          docker system prune -af
+          echo "After cleanup:"
+          df -h
+
 ########### Setup tags for each image
 
       - name: Setup metadata for live image tags
