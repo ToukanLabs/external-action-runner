@@ -36,7 +36,7 @@ env:
 jobs:
   build_and_push_to_registry:
     if: ${{ github.event.client_payload.message.GITHUB_REF_NAME }} != ""
-    name: Build and push production images
+    name: Build ${{ matrix.client-suffix }}
     runs-on: ubuntu-latest
       
     strategy:
@@ -52,17 +52,19 @@ jobs:
             modules: 'OEExceptionHandler=\OEModule\OEExceptionHandler\OEExceptionHandlerModule'
             php-version: "8.3"
             os-version: "noble"
+            primary: true
             experimental: false
           - client-suffix: 'meh'
-            # modules: 'OphLeEpatientletter,OphInMehPac,mehstaffdb,OphInCocoa=\OEModule\OphInCocoa\OphInCocoaModule'
-            modules: 'OEExceptionHandler=\OEModule\OEExceptionHandler\OEExceptionHandlerModule,OphLeEpatientletter,mehstaffdb,OphInMehPac'
+            modules: 'mehstaffdb,OphLeEpatientletter,OphInMehPac,OEExceptionHandler=\OEModule\OEExceptionHandler\OEExceptionHandlerModule'
             php-version: "8.3"
             os-version: "noble"
+            primary: false
             experimental: false
           - client-suffix: 'newmedica'
-            modules: 'OEExceptionHandler=\OEModule\OEExceptionHandler\OEExceptionHandlerModule,NewMedica'
+            modules: 'NewMedica,OEExceptionHandler=\OEModule\OEExceptionHandler\OEExceptionHandlerModule'
             php-version: "8.3"
             os-version: "noble"
+            primary: false
             experimental: false
           
     continue-on-error: ${{ matrix.experimental }}
@@ -126,34 +128,38 @@ jobs:
 
       - name: Setup metadata for live image tags
         id: meta-live
-        uses: toukanlabs/build-tag-gen@v3
+        uses: toukanlabs/build-tag-gen@v6
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
           suffix: ${{ env.IMAGE_SUFFIX }}
+          allow-latest-tag: true
+          is-primary: ${{ matrix.primary }}
           docker-user: ${{ secrets.DOCKER_USERNAME }}
-          docker-pass: ${{ secrets.DOCKER_PASSWORD }}
+          docker-pass: ${{ secrets.DOCKER_PAT }}
 
       - name: Setup metadata for Manager image tags
         id: meta-dbboot
-        uses: toukanlabs/build-tag-gen@v3
+        uses: toukanlabs/build-tag-gen@v6
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_MANAGER_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
           suffix: ${{ env.IMAGE_SUFFIX }}
+          allow-latest-tag: true
+          is-primary: ${{ matrix.primary }}
           docker-user: ${{ secrets.DOCKER_USERNAME }}
-          docker-pass: ${{ secrets.DOCKER_PASSWORD }}
+          docker-pass: ${{ secrets.DOCKER_PAT }}
 
       - name: Setup metadata for Debug image tags
         id: meta-debug
-        uses: toukanlabs/build-tag-gen@v3
+        uses: toukanlabs/build-tag-gen@v6
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
           suffix: ${{ env.IMAGE_SUFFIX }}
           prefix: "debug-"
           docker-user: ${{ secrets.DOCKER_USERNAME }}
-          docker-pass: ${{ secrets.DOCKER_PASSWORD }}
+          docker-pass: ${{ secrets.DOCKER_PAT }}
 
 ################
 # Build images #

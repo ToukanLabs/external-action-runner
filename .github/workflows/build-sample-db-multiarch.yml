@@ -1,5 +1,13 @@
 name: Sample DB - Build image
 
+# This workflow builds the sample database images for OpenEyes, supporting multiple architectures.
+# It is triggered by a repository dispatch event from the openeyes/openeyes repository.
+# The workflow builds images for both Intel and ARM architectures, using different database versions.
+# It also creates and pushes multi-arch manifests for the built images.
+# Finally, it updates the Docker Hub description for the images.
+#
+# Note that separate builds are needed for arm and intel architectures due to the way GHA Qemu emulation works for database images.
+
 on:
   # This is triggered from a dispatch by the openeyes/openeyes repo
   repository_dispatch:
@@ -87,7 +95,7 @@ jobs:
           allow-latest-tag: true
           is-primary: ${{ matrix.primary }}
           docker-user: ${{ secrets.DOCKER_USERNAME }}
-          docker-pass: ${{ secrets.DOCKER_PASSWORD }}
+          docker-pass: ${{ secrets.DOCKER_PAT }}
 
       - name: Build image for ${{ matrix.platform }}
         uses: docker/build-push-action@v6
@@ -148,7 +156,7 @@ jobs:
           allow-latest-tag: true
           is-primary: ${{ matrix.primary }}
           docker-user: ${{ secrets.DOCKER_USERNAME }}
-          docker-pass: ${{ secrets.DOCKER_PASSWORD }}
+          docker-pass: ${{ secrets.DOCKER_PAT }}
 
       - name: Remove existing manifest lists (ignore errors)
         run: |
