@@ -158,73 +158,12 @@ jobs:
           docker-user: ${{ secrets.DOCKER_USERNAME }}
           docker-pass: ${{ secrets.DOCKER_PAT }}
 
-################
-# Build images #
-################
-      # LIVE
-      - name: Build LIVE image
-        uses: docker/build-push-action@v5
-        with:
-          ssh: |
-              default=${{ env.SSH_AUTH_SOCK }}
-          context: ./Web-Live
-          push: false
-          platforms: linux/amd64,linux/arm64
-          build-args: |-
-            BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
-            MODULES=${{ matrix.modules }}
-            PHP_VERSION=${{ matrix.php-version }}
-            OS_VERSION=${{ matrix.os-version }}
-            OE_VERSION=${{ steps.meta-live.outputs.slug }}${{ env.IMAGE_SUFFIX }}
-          tags: ${{ steps.meta-live.outputs.tags }}
-      # Manager
-      - name: Build Manager image
-        uses: docker/build-push-action@v5
-        with:
-          ssh: |
-              default=${{ env.SSH_AUTH_SOCK }}
-          context: ./Manager
-          push: false
-          platforms: linux/amd64,linux/arm64
-          build-args: | # Note that OE_VERSION must use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
-            BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
-            MODULES=${{ matrix.modules }}
-            OE_VERSION=${{ steps.meta-dbboot.outputs.slug }}${{ env.IMAGE_SUFFIX }}
-            BASEIMAGE=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
-            PHP_VERSION=${{ matrix.php-version }}
-            OS_VERSION=${{ matrix.os-version }}
-          tags: ${{ steps.meta-dbboot.outputs.tags }}
-          
-      # DEBUG
-        # (Debug images contain the same code as the live image, but include additional debugging tools and run in dev mode)
-      - name: Build DEBUG image
-        uses: docker/build-push-action@v5
-        with:
-          ssh: |
-              default=${{ env.SSH_AUTH_SOCK }}
-          context: ./Web-Dev
-          push: false
-          platforms: linux/amd64,linux/arm64
-          # Note that BASE_IMAGE_TAG must use use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
-          # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
-          build-args: | 
-            BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
-            BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
-            BASE_IMAGE_TAG=${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
-            OE_VERSION=debug-${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
-            PHP_VERSION=${{ matrix.php-version }}
-            OS_VERSION=${{ matrix.os-version }}
-            CYPRESS_VERSION=
-            PROD_DEBUG=TRUE
-          tags: ${{ steps.meta-debug.outputs.tags }}
-          
 
-######################################## 
-# Push final images to docker registry #
-########################################
-
-      # LIVE
-      - name: Push Live image
+      ###############################
+      # Build and Push images (order matters!) #
+      ###############################
+      # LIVE (must be built and pushed first)
+      - name: Build and Push LIVE image
         uses: docker/build-push-action@v5
         with:
           ssh: |
@@ -240,8 +179,8 @@ jobs:
             OE_VERSION=${{ steps.meta-live.outputs.slug }}${{ env.IMAGE_SUFFIX }}
           tags: ${{ steps.meta-live.outputs.tags }}
 
-      # Manager
-      - name: Push Manager image
+      # MANAGER (depends on LIVE image being in registry)
+      - name: Build and Push Manager image
         uses: docker/build-push-action@v5
         with:
           ssh: |
@@ -249,7 +188,7 @@ jobs:
           context: ./Manager
           push: true
           platforms: linux/amd64,linux/arm64
-          build-args: |- # Note that OE_VERSION must use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
+          build-args: |
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
             OE_VERSION=${{ steps.meta-dbboot.outputs.slug }}${{ env.IMAGE_SUFFIX }}
@@ -257,9 +196,9 @@ jobs:
             PHP_VERSION=${{ matrix.php-version }}
             OS_VERSION=${{ matrix.os-version }}
           tags: ${{ steps.meta-dbboot.outputs.tags }}
-          
 
-      - name: Push DEBUG image
+      # DEBUG (depends on LIVE image being in registry)
+      - name: Build and Push DEBUG image
         uses: docker/build-push-action@v5
         with:
           ssh: |
@@ -267,8 +206,6 @@ jobs:
           context: ./Web-Dev
           push: true
           platforms: linux/amd64,linux/arm64
-          # Note that BASE_IMAGE_TAG must use use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
-          # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
           build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
