@@ -172,6 +172,7 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Live
           push: false
+          platforms: linux/amd64,linux/arm64
           build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
@@ -187,6 +188,7 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Manager
           push: false
+          platforms: linux/amd64,linux/arm64
           build-args: | # Note that OE_VERSION must use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
@@ -205,6 +207,7 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Dev
           push: false
+          platforms: linux/amd64,linux/arm64
           # Note that BASE_IMAGE_TAG must use use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
           # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
           build-args: | 
@@ -231,6 +234,7 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Live
           push: true
+          platforms: linux/amd64,linux/arm64
           build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
@@ -247,6 +251,7 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Manager
           push: true
+          platforms: linux/amd64,linux/arm64
           build-args: |- # Note that OE_VERSION must use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
@@ -264,6 +269,7 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Dev
           push: true
+          platforms: linux/amd64,linux/arm64
           # Note that BASE_IMAGE_TAG must use use a 'slug' format, not GITHUB_REF_NAME, becuse /'s get converted to -'s
           # PROD_DEBUG=true tells the dockerfile to build a debug image rather than a blank development image
           build-args: |-
