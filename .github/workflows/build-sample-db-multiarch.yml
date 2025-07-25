@@ -23,36 +23,40 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - db-image: "mariadb"
-            db-image-version: "10.11"
-            primary: true
+          - &intel
             runner: ubuntu-latest
             arch: amd64
             platform: linux/amd64
-          - db-image: "mariadb"
-            db-image-version: "10.11"
-            primary: true
+          - &arm
             runner: ubuntu-24.04-arm
             arch: arm64
             platform: linux/arm64
+
+          # mariadb 10.11 (primary)
+          - db-image: "mariadb"
+            db-image-version: "10.11"
+            primary: true
+            <<: *intel
+          - db-image: "mariadb"
+            db-image-version: "10.11"
+            primary: true
+            <<: *arm
+
+          # mariadb 11.8
+          - db-image: "mariadb"
+            db-image-version: "11.8"
+            primary: false
+            <<: *intel
+          - db-image: "mariadb"
+            db-image-version: "11.8"
+            primary: false
+            <<: *arm
+
+          # mysql 8.0
           - db-image: "mysql"
             db-image-version: "8.0"
             primary: false
-            runner: ubuntu-latest
-            arch: amd64
-            platform: linux/amd64
-          - db-image: "mariadb"
-            db-image-version: "11.8"
-            primary: false
-            runner: ubuntu-latest
-            arch: amd64
-            platform: linux/amd64
-          - db-image: "mariadb"
-            db-image-version: "11.8"
-            primary: false
-            runner: ubuntu-24.04-arm
-            arch: arm64
-            platform: linux/arm64
+            <<: *intel
 
     steps:
       - name: Checkout
