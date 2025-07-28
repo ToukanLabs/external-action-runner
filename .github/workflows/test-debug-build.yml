@@ -28,7 +28,7 @@ jobs:
   build_and_push_to_registry:
     if: ${{ github.event.client_payload.message.GITHUB_REF_NAME }} != ""
     name: Build ${{ matrix.client-suffix }}
-    runs-on: ubuntu-24.04-arm64
+    runs-on: ubuntu-24.04-arm
 
     strategy:
       fail-fast: false 
@@ -134,7 +134,7 @@ jobs:
           platforms: linux/arm64
           build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
-            BASE_IMAGE_NAME="toukanlabsdocker/oe-web-live"
+            BASE_IMAGE_NAME=toukanlabsdocker/oe-web-live
             BASE_IMAGE_TAG=${{ github.event.inputs.base-image-tag }}
             OE_VERSION=debug-${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
             PHP_VERSION=${{ matrix.php-version }}
