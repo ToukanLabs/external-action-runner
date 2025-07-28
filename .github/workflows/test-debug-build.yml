@@ -1,0 +1,148 @@
+name: Debug Build Test Workflow
+
+## THIS IS A TEST ONLY - DO NOT USE IN PRODUCTION
+
+on:
+  # This is triggered from a dispatch by the openeyes/openeyes repo
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'tag to build. Do not use a branch name here, only a tag name. e.g. v11.0.0-rc3'
+        required: true
+      base-image-tag:
+        description: 'Base image tag to use for the oe-web-live base image. e.g. v11.0.0-rc3'
+        required: true
+
+
+env:
+  PRIMARY_PHP_VERSION: "8.3"
+  DOCKER_ORG: "toukanlabsdocker"
+  DOCKER_WEB_IMAGE: "oe-web-live"
+  IMAGE_SUFFIX: ""
+  # The next 2 come from the dispatch action, which uses rlespinasse/github-slug-action to generate the refs
+  GITHUB_REF_SLUG: ${{ github.event.inputs.tag }}
+  GITHUB_REF_NAME: ${{ github.event.inputs.tag }}
+  REF_SLUG_NO_V: ""
+
+jobs:
+  build_and_push_to_registry:
+    if: ${{ github.event.client_payload.message.GITHUB_REF_NAME }} != ""
+    name: Build ${{ matrix.client-suffix }}
+    runs-on: ubuntu-24.04-arm64
+
+    strategy:
+      fail-fast: false 
+      matrix:
+        ## Setup the differnt build jobs. These can specify: 
+        #   - a special client build ONLY WHEN A SPECIFIC CLIENT REQUIRES ADDITIONAL CUSTOM MODULES
+        #        - In which case, "modules" should be specified as a comma separated string, and can include
+        #          class namespacing in the format <module>=<class>
+        #   - a diffenerent PHP version
+        include:
+          - client-suffix: ''
+            modules: 'OEExceptionHandler=\OEModule\OEExceptionHandler\OEExceptionHandlerModule'
+            php-version: "8.3"
+            os-version: "noble"
+            primary: false
+            experimental: false
+          
+    continue-on-error: ${{ matrix.experimental }}
+
+    steps:
+      
+      - name: Checkout OEBuilder
+        uses: actions/checkout@v4
+        with:
+          repository: ToukanLabs/OEImageBuilder
+          ref: master
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+            ssh-private-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+
+      - name: Setup image suffix
+        id: setsuffix
+        shell: bash
+        run: |
+          if [ -n "$CLIENT_SUFFIX" ] || [ -n "$PHP_VERSION" ]; then       
+            # Set client prefix if specified
+            [ -n "$CLIENT_SUFFIX" ] && IMAGE_SUFFIX="$IMAGE_SUFFIX-$CLIENT_SUFFIX" || :
+            
+            # set php version prefix if specified. Do not set a prefix if this is the primary version
+            [[ -n "$PHP_VERSION" && "$PHP_VERSION" != "$PRIMARY_PHP_VERSION" ]] && IMAGE_SUFFIX="$IMAGE_SUFFIX-php$PHP_VERSION" || :
+            
+            if [ -n "$IMAGE_SUFFIX" ]; then
+              echo "{hassuffix}=${{ toJSON(true) }}" >> $GITHUB_OUTPUT
+              echo "IMAGE_SUFFIX=${IMAGE_SUFFIX}" >> $GITHUB_ENV
+              echo "IMAGE_SUFFIX set to: ${IMAGE_SUFFIX}"
+            else
+              echo "{hassuffix}=${{ toJSON(false) }}" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "{hassuffix}=${{ toJSON(false) }}" >> $GITHUB_OUTPUT
+          fi
+        env:
+          CLIENT_SUFFIX: ${{ matrix.client-suffix }}
+          PHP_VERSION: ${{ matrix.php-version }}
+          OS_VERSION: ${{ matrix.os-version }}
+          IMAGE_SUFFIX: ${{ env.IMAGE_SUFFIX }}
+          PRIMARY_PHP_VERSION: ${{ env.PRIMARY_PHP_VERSION }}
+          GITHUB_REF_SLUG: ${{ env.GITHUB_REF_SLUG }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PAT }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        # with:
+          # driver: cloud
+          # endpoint: "toukanlabsdocker/builder1"
+          # install: true
+
+########### Setup tags for each image
+
+      - name: Setup metadata for Debug image tags
+        id: meta-debug
+        uses: toukanlabs/build-tag-gen@v6
+        with:
+          image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
+          slug: ${{ env.GITHUB_REF_SLUG }}
+          suffix: ${{ env.IMAGE_SUFFIX }}
+          prefix: "debug-"
+          docker-user: ${{ secrets.DOCKER_USERNAME }}
+          docker-pass: ${{ secrets.DOCKER_PAT }}
+
+
+      ###############################
+      # Build (order matters!) #
+      ###############################
+      # LIVE (must be built and pushed first)
+
+      # DEBUG (depends on LIVE image being in registry)
+      - name: Build and Push DEBUG image
+        uses: docker/build-push-action@v6
+        with:
+          ssh: |
+              default=${{ env.SSH_AUTH_SOCK }}
+          context: ./Web-Dev
+          push: false
+          platforms: linux/arm64
+          build-args: |-
+            BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
+            BASE_IMAGE_NAME="toukanlabsdocker/oe-web-live"
+            BASE_IMAGE_TAG=${{ github.event.inputs.base-image-tag }}
+            OE_VERSION=debug-${{ steps.meta-debug.outputs.slug }}${{ env.IMAGE_SUFFIX }}
+            PHP_VERSION=${{ matrix.php-version }}
+            OS_VERSION=${{ matrix.os-version }}
+            CYPRESS_VERSION=
+            PROD_DEBUG=TRUE
+          tags: ${{ steps.meta-debug.outputs.tags }}
+          # For pull requests, export results to the build cache.
+          # Otherwise, push to a registry.
+          # outputs: ${{ github.event_name == 'pull_request' && 'type=cacheonly' || 'type=registry' }}
+          

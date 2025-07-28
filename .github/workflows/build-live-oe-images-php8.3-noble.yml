@@ -1,5 +1,9 @@
 name: Publish OE images (PHP8.3-noble)
 
+# *****************************************************************************************
+# ********* IMPORTANT - THIS BUILDS IN THE DOCKER CLOUD, NOT ON THE GITHUB RUNNER *********
+# *****************************************************************************************
+
 ## Builds deployable images for the OE application.
 ## For production scenarios, always try to tag the repo, which will create a tagged image
 ## Tags should use semantic versioning (major.minor.patch - e.g, v4.1.0)
@@ -79,7 +83,7 @@ jobs:
           ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
 
       - name: Setup SSH Agent
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.9.1
         with:
             ssh-private-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
 
