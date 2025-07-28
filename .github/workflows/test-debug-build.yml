@@ -124,14 +124,14 @@ jobs:
       # LIVE (must be built and pushed first)
 
       # DEBUG (depends on LIVE image being in registry)
-      - name: Build and Push DEBUG image
+      - name: Build DEBUG image
         uses: docker/build-push-action@v6
         with:
           ssh: |
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Dev
           push: false
-          platforms: linux/arm64
+          platforms: linux/arm64, linux/amd64
           build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             BASE_IMAGE_NAME=toukanlabsdocker/oe-web-live
