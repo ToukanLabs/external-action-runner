@@ -1,7 +1,7 @@
-name: Sample DB - Build image
+name: IOLMasterImport - Build image
 
-# This workflow builds the sample database images for OpenEyes, supporting multiple architectures.
-# It is triggered by a repository dispatch event from the openeyes/openeyes repository.
+# This workflow builds the IOLMasterImport images for OpenEyes, supporting multiple architectures.
+# It is triggered by a repository dispatch event from the openeyes/iolmaster repository.
 # The workflow builds images for both Intel and ARM architectures, using different database versions.
 # It also creates and pushes multi-arch manifests for the built images.
 # Finally, it updates the Docker Hub description for the images.
@@ -11,62 +11,38 @@ name: Sample DB - Build image
 on:
   # This is triggered from a dispatch by the openeyes/openeyes repo
   repository_dispatch:
-    types: [build-oe-sample-db_*]
+    types: [build-iolmaster_*]
   workflow_dispatch:
 
 env:
   DOCKER_ORG: toukanlabsdocker
-  DOCKER_IMAGE: oe-sample-db
+  DOCKER_IMAGE: iolmasterimport
   IMAGE_SUFFIX: ""
   # The next 2 come from the dispatch action, which uses rlespinasse/github-slug-action to generate the refs
   GITHUB_REF_SLUG: ${{ github.event.client_payload.message.GITHUB_REF_SLUG }}
   GITHUB_REF_NAME: ${{ github.event.client_payload.message.GITHUB_REF_NAME }}
-  REPOSITORY: openeyes/sample
+  REPOSITORY: openeyes/iolmasterimport
 
 jobs:
   build-and-push:
-    name: Build and Push ${{ matrix.db-image }}:${{ matrix.db-image-version }} (${{ matrix.arch }})
+    name: Build and Push ${{ matrix.arch }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         include:
-          # mariadb 10.11 (primary)
-          - db-image: "mariadb"
-            db-image-version: "10.11"
-            primary: true
-            runner: ubuntu-latest
+          # Intel architecture
+          - primary: true
+            runner: ubuntu-24.04
             arch: amd64
             platform: linux/amd64
-          - db-image: "mariadb"
-            db-image-version: "10.11"
-            primary: true
+
+         # ARM architecture
+          - primary: true
             runner: ubuntu-24.04-arm
             arch: arm64
             platform: linux/arm64
-
-          # mariadb 11.8
-          - db-image: "mariadb"
-            db-image-version: "11.8"
-            primary: false
-            runner: ubuntu-latest
-            arch: amd64
-            platform: linux/amd64
-          - db-image: "mariadb"
-            db-image-version: "11.8"
-            primary: false
-            runner: ubuntu-24.04-arm
-            arch: arm64
-            platform: linux/arm64
-
-          # mysql 8.0
-          - db-image: "mysql"
-            db-image-version: "8.0"
-            primary: false
-            runner: ubuntu-latest
-            arch: amd64
-            platform: linux/amd64
 
     steps:
       - name: Checkout
@@ -91,7 +67,6 @@ jobs:
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
-          prefix: ${{ matrix.db-image }}_${{ matrix.db-image-version }}
           suffix: ${{ env.IMAGE_SUFFIX }}
           arch: ${{ matrix.arch }}
           allow-latest-tag: true
@@ -104,8 +79,6 @@ jobs:
         with:
           context: .
           load: true
-          build-args: |
-            MYSQLIMAGENAME=${{ matrix.db-image }}:${{ matrix.db-image-version }}
           tags: tempimage:${{ matrix.arch }}
           platforms: ${{ matrix.platform }}
 
@@ -126,19 +99,19 @@ jobs:
     name: Create and Push Multi-Arch Manifests
     needs: build-and-push
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - db-image: "mariadb"
-            db-image-version: "10.11"
-            primary: true
-          - db-image: "mysql"
-            db-image-version: "8.0"
-            primary: false
-          - db-image: "mariadb"
-            db-image-version: "11.8"
-            primary: false
+    # strategy:
+    #   fail-fast: false
+    #   matrix:
+    #     include:
+    #       - db-image: "mariadb"
+    #         db-image-version: "10.11"
+    #         primary: true
+    #       - db-image: "mysql"
+    #         db-image-version: "8.0"
+    #         primary: false
+    #       - db-image: "mariadb"
+    #         db-image-version: "11.8"
+    #         primary: false
 
     steps:
       - name: Log in to Docker Hub
@@ -153,7 +126,6 @@ jobs:
         with:
           image-name: ${{ env.DOCKER_ORG }}/${{ env.DOCKER_IMAGE }}
           slug: ${{ env.GITHUB_REF_SLUG }}
-          prefix: ${{ matrix.db-image }}_${{ matrix.db-image-version }}
           suffix: ${{ env.IMAGE_SUFFIX }}
           allow-latest-tag: true
           is-primary: ${{ matrix.primary }}
