@@ -154,6 +154,9 @@ jobs:
             echo "Creating manifest for $tag with: ${ARCHES[*]}"
             docker manifest create "$tag" ${ARCHES[*]}
             docker manifest push "$tag"
+            # Delete the original arch manifests after pushing the multi-arch manifest
+            docker manifest rm "$tag-amd64" || true
+            docker manifest rm "$tag-arm64" || true
           done
 
   update-docker-hub-description:
