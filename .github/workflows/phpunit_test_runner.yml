@@ -6,19 +6,18 @@ on:
 
 env:
   GITHUB_REF_NAME: ${{ github.event.client_payload.GITHUB_REF_NAME }}
-  GITHUB_REF: ${{ github.event.client_payload.GITHUB_REF }}
-  GITHUB_HEAD_REF: ${{ github.event.client_payload.GITHUB_HEAD_REF }}
-  GITHUB_BASE_REF: ${{ github.event.client_payload.GITHUB_BASE_REF }}
-  GITHUB_HEAD_SHA: ${{ github.event.client_payload.GITHUB_HEAD_SHA }}
-  GITHUB_BASE_SHA: ${{ github.event.client_payload.GITHUB_BASE_SHA }}
-  GITHUB_PULL_REQUEST: ${{ github.event.client_payload.GITHUB_PULL_REQUEST }}
   GITHUB_REPOSITORY: 'openeyes/openeyes'
   GITHUB_RUN_ID: ${{ github.event.client_payload.GITHUB_RUN_ID }}
   GITHUB_RUN_NUMBER: ${{ github.event.client_payload.GITHUB_RUN_NUMBER }}
   GITHUB_RUN_ATTEMPT: ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }}
+  GITHUB_PULL_REQUEST: ${{ github.event.client_payload.GITHUB_PULL_REQUEST }}
   ADDITIONAL_MODULES: ${{ github.event.client_payload.additional_modules || '' }}
 
-run-name: PHPUnit - PR ${{ github.event.client_payload.GITHUB_PULL_REQUEST }} - Attempt ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }} - Run id ${{ github.event.client_payload.GITHUB_RUN_ID }}
+
+run-name: >
+  PHPUnit
+  ${{ github.event.client_payload.GITHUB_PULL_REQUEST && format('- PR {0}', github.event.client_payload.GITHUB_PULL_REQUEST) || format('- Ref {0}', github.event.client_payload.GITHUB_REF_NAME) }}
+  - Run id ${{ github.event.client_payload.GITHUB_RUN_ID }} Attempt ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }}
 
 jobs:
   phpunit-tests:
@@ -50,7 +49,7 @@ jobs:
           echo "TESTS_TO_RUN=${{ matrix.test-type }}" >> protected/tests/.env
           echo "PUID=$(id -u)" >> protected/tests/.env
           echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
-          echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
+          echo "BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}" >> protected/tests/.env
           echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
           if [ -n "${{ env.ADDITIONAL_MODULES }}" ]; then
             echo "MODULES=${{ env.ADDITIONAL_MODULES }}" >> protected/tests/.env
