@@ -41,7 +41,7 @@ jobs:
         with:
           repository: ${{ env.GITHUB_REPOSITORY }}
           ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
-          ref: ${{ env.GITHUB_HEAD_REF }}
+          ref: ${{ env.GITHUB_HEAD_REF && format('{0}', env.GITHUB_HEAD_REF) || env.GITHUB_REF_NAME }}
 
       # write environment variables to a docker compose .env file
       - name: Write variables to compose .env file
@@ -50,6 +50,7 @@ jobs:
           echo "PUID=$(id -u)" >> protected/tests/.env
           echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
           echo "BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}" >> protected/tests/.env
+          echo "OE_DEFAULT_BRANCH=${{ env.GITHUB_BASE_REF }}" >> protected/tests/.env
           echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
           if [ -n "${{ env.ADDITIONAL_MODULES }}" ]; then
             echo "MODULES=${{ env.ADDITIONAL_MODULES }}" >> protected/tests/.env
