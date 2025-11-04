@@ -1,8 +1,19 @@
 {
     "workbench.colorCustomizations": {
-        "activityBar.background": "#4B1D38",
-        "titleBar.activeBackground": "#296569",
-        "titleBar.activeForeground": "#FCF8FB"
+        "activityBar.background": "#f2ae1d",
+        "titleBar.activeBackground": "#f2ae1d",
+        "titleBar.activeForeground": "#FFFFFF",
+        "titleBar.inactiveBackground": "#f2ae1d",
+        "titleBar.inactiveForeground": "#FFFFFF",
+        "titleBar.border": "#f2ae1d",
+        "activityBar.foreground": "#FFFFFF",
+        "statusBar.background": "#f2ae1d",
+        "statusBar.foreground": "#FFFFFF",
+        "statusBar.debuggingBackground": "#f2ae1d",
+        "statusBar.debuggingForeground": "#FFFFFF",
+        "tab.activeBorder": "#f2ae1d",
+        "iLoveWorkSpaceColors": true,
+        "iLoveWorkSpaceRandom": false
     },
     "cSpell.words": [
         "Epatientletter",

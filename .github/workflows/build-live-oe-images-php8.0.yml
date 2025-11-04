@@ -1,4 +1,4 @@
-name: Publish OE Docker images (PHP8.0)
+name: Publish OE images (PHP8.0)
 
 ## Builds deployable images for the OE application.
 ## For production scenarios, always try to tag the repo, which will create a tagged image
