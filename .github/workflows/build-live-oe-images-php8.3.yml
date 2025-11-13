@@ -217,6 +217,7 @@ jobs:
             OS_VERSION=${{ matrix.os-version }}
             CYPRESS_VERSION=
             PROD_DEBUG=TRUE
+            COMPOSER_VERSION=2.8.12
           tags: ${{ steps.meta-debug.outputs.tags }}
           
 
@@ -276,5 +277,6 @@ jobs:
             OS_VERSION=${{ matrix.os-version }}
             CYPRESS_VERSION=
             PROD_DEBUG=TRUE
+            COMPOSER_VERSION=2.8.12
           tags: ${{ steps.meta-debug.outputs.tags }}
           
