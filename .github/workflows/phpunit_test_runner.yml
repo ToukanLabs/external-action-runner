@@ -12,6 +12,7 @@ env:
   GITHUB_RUN_ATTEMPT: ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }}
   GITHUB_PULL_REQUEST: ${{ github.event.client_payload.GITHUB_PULL_REQUEST }}
   ADDITIONAL_MODULES: ${{ github.event.client_payload.additional_modules || '' }}
+  COMPOSER_VERSION: 2.8.12
 
 
 run-name: >
