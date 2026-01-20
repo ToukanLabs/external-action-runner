@@ -61,12 +61,12 @@ jobs:
             platform: linux/arm64
 
           # mysql 8.0
-          - db-image: "mysql"
-            db-image-version: "8.0"
-            primary: false
-            runner: ubuntu-latest
-            arch: amd64
-            platform: linux/amd64
+          # - db-image: "mysql"
+          #   db-image-version: "8.0"
+          #   primary: false
+          #   runner: ubuntu-latest
+          #   arch: amd64
+          #   platform: linux/amd64
 
     steps:
       - name: Checkout
@@ -133,9 +133,9 @@ jobs:
           - db-image: "mariadb"
             db-image-version: "10.11"
             primary: true
-          - db-image: "mysql"
-            db-image-version: "8.0"
-            primary: false
+          # - db-image: "mysql"
+          #   db-image-version: "8.0"
+          #   primary: false
           - db-image: "mariadb"
             db-image-version: "11.8"
             primary: false
