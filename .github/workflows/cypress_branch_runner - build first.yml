@@ -1,4 +1,4 @@
-name: Cypress branch runner 
+name: Cypress branch runner - build once
 
 on:
   workflow_dispatch:
@@ -60,10 +60,11 @@ jobs:
           tar --exclude='.git' -czf built.tgz .
 
       - name: Upload built artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: built-project
           path: built.tgz
+          retention-days: 1
 
   cypress-tests:
     name: Cypress tests - branch ${{ github.event.inputs.branch }}
@@ -90,7 +91,7 @@ jobs:
 
       # download and extract built project produced by the build job
       - name: Download built artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: built-project
           path: .
