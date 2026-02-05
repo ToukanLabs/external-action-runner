@@ -45,6 +45,7 @@ jobs:
           echo "CURRENTS_PROJECT_ID=${{ secrets.CURRENTS_PROJECT_ID }}" >> protected/tests/.env
           echo "TESTS_TO_RUN=BUILD-AND-STOP" >> protected/tests/.env
           echo "PUID=$(id -u)" >> protected/tests/.env
+          echo "PGID=$(id -g)" >> protected/tests/.env
           echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
           echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
           echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
@@ -55,8 +56,10 @@ jobs:
         run: |
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
 
-      - name: Archive built project
+      - name: Ensure ownership and archive built project
         run: |
+          # ensure files are owned by the runner (fallback) to avoid permission denied during tar
+          sudo chown -R $(id -u):$(id -g) . || true
           tar --exclude='.git' -czf built.tgz .
 
       - name: Upload built artifact
@@ -100,6 +103,11 @@ jobs:
         run: |
           if [ -f built.tgz ]; then tar -xzf built.tgz; fi
 
+      - name: Ensure ownership of extracted build
+        run: |
+          # make sure extracted files are accessible to the runner
+          sudo chown -R $(id -u):$(id -g) . || true
+
       # write environment variables to a docker compose .env file
       - name: Write variables to compose .envfile
         run: |
@@ -107,6 +115,7 @@ jobs:
           echo "CURRENTS_PROJECT_ID=${{ secrets.CURRENTS_PROJECT_ID }}" >> protected/tests/.env
           echo "TESTS_TO_RUN=CURRENTS_CLOUD_SHORT" >> protected/tests/.env
           echo "PUID=$(id -u)" >> protected/tests/.env
+          echo "PGID=$(id -g)" >> protected/tests/.env
           echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
           echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
           echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
