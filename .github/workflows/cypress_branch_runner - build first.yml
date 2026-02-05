@@ -67,7 +67,7 @@ jobs:
           while [ $attempt -le $MAX_ATTEMPTS ]; do
             echo "Attempt $attempt of $MAX_ATTEMPTS: ensuring ownership and creating archive"
             sudo chown -R $(id -u):$(id -g) . || true
-            if tar --exclude='.git' -czf built.tgz .; then
+            if tar -czf built.tgz .; then
               echo "Archive created successfully"
               break
             else
@@ -118,14 +118,14 @@ jobs:
           name: built-project
           path: .
 
-      - name: Extract built artifact
+      - name: Extract built artifact and reset permissions
         run: |
-          if [ -f built.tgz ]; then tar -xzf built.tgz; fi
-
-      - name: Ensure ownership of extracted build
-        run: |
-          # make sure extracted files are accessible to the runner
-          sudo chown -R $(id -u):$(id -g) . || true
+          if [ -f built.tgz ]; then
+            tar -xzf built.tgz --no-same-owner --no-same-permissions
+            # reset ownership to the runner and make files writable
+            sudo chown -R $(id -u):$(id -g) . || true
+            sudo chmod -R 0777 . || true
+          fi
 
       # write environment variables to a docker compose .env file
       - name: Write variables to compose .envfile
