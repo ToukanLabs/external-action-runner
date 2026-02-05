@@ -55,12 +55,31 @@ jobs:
       - name: Run docker (build only)
         run: |
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
+          # give container a short moment to fully shut down and flush files
+          sleep 5
 
-      - name: Ensure ownership and archive built project
+      - name: Ensure ownership and archive built project (with retries)
         run: |
-          # ensure files are owned by the runner (fallback) to avoid permission denied during tar
-          sudo chown -R $(id -u):$(id -g) . || true
-          tar --exclude='.git' -czf built.tgz .
+          set -euo pipefail
+          MAX_ATTEMPTS=5
+          SLEEP_SEC=3
+          attempt=1
+          while [ $attempt -le $MAX_ATTEMPTS ]; do
+            echo "Attempt $attempt of $MAX_ATTEMPTS: ensuring ownership and creating archive"
+            sudo chown -R $(id -u):$(id -g) . || true
+            if tar --exclude='.git' -czf built.tgz .; then
+              echo "Archive created successfully"
+              break
+            else
+              echo "tar failed on attempt $attempt"
+              attempt=$((attempt+1))
+              sleep $SLEEP_SEC
+            fi
+          done
+          if [ ! -f built.tgz ]; then
+            echo "Failed to create archive after $MAX_ATTEMPTS attempts"
+            exit 1
+          fi
 
       - name: Upload built artifact
         uses: actions/upload-artifact@v4
