@@ -1,0 +1,126 @@
+name: Cypress branch runner 
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test'
+        required: true
+      auto-cancel-after-failures:
+        description: 'Auto cancel after number of failures (or false to disable)'
+        required: true
+        default: '10'
+
+run-name: Cypress tests - branch ${{ github.event.inputs.branch }}
+
+env:
+  GITHUB_HEAD_REF: ${{ github.event.inputs.branch }}
+  GITHUB_REPOSITORY: openeyes/openeyes
+  GITHUB_RUN_ID: ${{ github.run_id }}
+  GITHUB_RUN_NUMBER: ${{ github.run_number }}
+  GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+
+jobs:
+  build:
+    name: Build project once
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GITHUB_REPOSITORY }}
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+          ref: ${{ env.GITHUB_HEAD_REF }}
+
+      # write environment variables to a docker compose .env file (build-only)
+      - name: Write variables to compose .envfile
+        run: |
+          echo "CURRENTS_RECORD_KEY=${{ secrets.CURRENTS_RECORD_KEY }}" >> protected/tests/.env
+          echo "CURRENTS_PROJECT_ID=${{ secrets.CURRENTS_PROJECT_ID }}" >> protected/tests/.env
+          echo "TESTS_TO_RUN=BUILD-AND-STOP" >> protected/tests/.env
+          echo "PUID=$(id -u)" >> protected/tests/.env
+          echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
+          echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
+          echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
+          echo "CYPRESS_FAIL_FAST_VALUE=${{ github.event.inputs.auto-cancel-after-failures }}" >> protected/tests/.env
+          echo "LOG_TO_BROWSER='error, warning, notice, info, debug'" >> protected/tests/.env
+
+      - name: Run docker (build only)
+        run: |
+          docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
+
+      - name: Archive built project
+        run: |
+          tar --exclude='.git' -czf built.tgz .
+
+      - name: Upload built artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: built-project
+          path: built.tgz
+
+  cypress-tests:
+    name: Cypress tests - branch ${{ github.event.inputs.branch }}
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        # run 7 copies of the current job in parallel
+        containers: [1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GITHUB_REPOSITORY }}
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+          ref: ${{ env.GITHUB_HEAD_REF }}
+
+      # download and extract built project produced by the build job
+      - name: Download built artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: built-project
+          path: .
+
+      - name: Extract built artifact
+        run: |
+          if [ -f built.tgz ]; then tar -xzf built.tgz; fi
+
+      # write environment variables to a docker compose .env file
+      - name: Write variables to compose .envfile
+        run: |
+          echo "CURRENTS_RECORD_KEY=${{ secrets.CURRENTS_RECORD_KEY }}" >> protected/tests/.env
+          echo "CURRENTS_PROJECT_ID=${{ secrets.CURRENTS_PROJECT_ID }}" >> protected/tests/.env
+          echo "TESTS_TO_RUN=CURRENTS_CLOUD_SHORT" >> protected/tests/.env
+          echo "PUID=$(id -u)" >> protected/tests/.env
+          echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
+          echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
+          echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
+          echo "CYPRESS_FAIL_FAST_VALUE=${{ github.event.inputs.auto-cancel-after-failures }}" >> protected/tests/.env
+          echo "LOG_TO_BROWSER='error, warning, notice, info, debug'" >> protected/tests/.env
+
+
+      - name: Run docker
+        run: |
+          docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
+
+      - name: Cancel Currents run if the workflow is cancelled
+        if: ${{ cancelled() }}
+        uses: currents-dev/cancel-run-gh-action@v1
+        with:
+          api-token: ${{ secrets.CURRENTS_API_KEY }}
+          github-run-id: ${{ github.run_id }}
+          github-run-attempt: ${{ github.run_attempt }}
