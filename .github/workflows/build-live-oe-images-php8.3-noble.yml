@@ -178,7 +178,8 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Live
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
+          #,linux/arm64 - arm builds temporarily suspended to save build minutes (until we actually start using ARM)
           build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
@@ -198,7 +199,8 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Manager
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
+          #,linux/arm64 - arm builds temporarily suspended to save build minutes (until we actually start using ARM)
           build-args: |
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
@@ -219,7 +221,8 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Dev
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
+          #,linux/arm64 - arm builds temporarily suspended to save build minutes (until we actually start using ARM)
           build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
