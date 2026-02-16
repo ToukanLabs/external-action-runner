@@ -46,6 +46,8 @@ jobs:
 
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
 
       # Check if playwright.config.ts exists and set an output
       # The rest of the steps will be skipped if it does not exist, as not all branches have playwright coverage yet
