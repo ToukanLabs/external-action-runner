@@ -54,10 +54,11 @@ jobs:
 
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.use_tmate == 'true' }}
         with:
           detached: true
           limit-access-to-actor: false
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.use_tmate }}
+        
 
       # Check if playwright.config.ts exists and set an output
       # The rest of the steps will be skipped if it does not exist, as not all branches have playwright coverage yet
