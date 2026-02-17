@@ -14,7 +14,7 @@ on:
       use_tmate:
         description: 'Set up a tmate session for debugging'
         required: true
-        default: true
+        default: false
         type: boolean
 
 
