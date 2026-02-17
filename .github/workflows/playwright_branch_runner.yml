@@ -1,0 +1,101 @@
+name: Playwright runner
+
+on:
+  # This is triggered from a dispatch by the openeyes/openeyes repo
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test'
+        required: true
+      auto-cancel-after-failures:
+        description: 'Auto cancel after number of failures (or false to disable)'
+        required: true
+        default: '10'
+      use_tmate:
+        description: 'Whether to set up a tmate session for debugging'
+        required: true
+        default: true
+        type: boolean
+
+
+env:
+  GITHUB_HEAD_REF: ${{ github.event.inputs.branch }}
+  GITHUB_REPOSITORY: openeyes/openeyes
+  GITHUB_RUN_ID: ${{ github.run_id }}
+  GITHUB_RUN_NUMBER: ${{ github.run_number }}
+  GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+
+run-name: Playwright - Branch ${{ github.event.inputs.branch }} - Attempt ${{ github.run_attempt }}
+
+jobs:
+  playwright-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # run multiple copies of the current job in parallel
+        containers: [1, 2]
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Checkout
+        uses: actions/checkout@v5
+        # populate commit message for merge commits
+        # see https://currents.dev/readme/ci-setup/github-actions
+        with:
+          repository: ${{ env.GITHUB_REPOSITORY }}
+          ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
+          ref: ${{ env.GITHUB_HEAD_REF }}
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+          limit-access-to-actor: false
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.use_tmate }}
+
+      # Check if playwright.config.ts exists and set an output
+      # The rest of the steps will be skipped if it does not exist, as not all branches have playwright coverage yet
+      - name: Check for Playwright config
+        id: check_playwright
+        run: |
+          if [ -f "playwright.config.ts" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Playwright config file not found!"
+            echo "Skipping Playwright tests."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      # write environment variables to a docker compose .env file
+      - name: Write variables to compose .envfile
+        if: steps.check_playwright.outputs.exists == 'true'
+        run: |
+          echo "CURRENTS_RECORD_KEY=${{ secrets.CURRENTS_RECORD_KEY }}" >> protected/tests/.env
+          echo "CURRENTS_PROJECT_ID=${{ secrets.CURRENTS_PROJECT_ID }}" >> protected/tests/.env
+          echo "TESTS_TO_RUN=PLAYWRIGHT_CLOUD_SHORT" >> protected/tests/.env
+          echo "PUID=$(id -u)" >> protected/tests/.env
+          echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
+          echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
+          echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
+          echo "OE_DEFAULT_BRANCH=${{ env.GITHUB_BASE_REF }}" >> protected/tests/.env
+          echo "LOG_TO_BROWSER='error, warning, notice, info, profile, trace'" >> protected/tests/.env
+          echo "OE_APP_LOG_LEVELS='error, warning, notice, info, profile, trace'" >> protected/tests/.env
+
+      - name: Run docker
+        if: steps.check_playwright.outputs.exists == 'true'
+        run: |
+          docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
+
+      - name: Cancel Currents run if the workflow is cancelled
+        if: steps.check_playwright.outputs.exists == 'true' && cancelled()
+        uses: currents-dev/cancel-run-gh-action@v1
+        with:
+          api-token: ${{ secrets.CURRENTS_API_KEY }}
+          github-run-id: ${{ github.run_id }}
+          github-run-attempt: ${{ github.run_attempt }}
