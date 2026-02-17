@@ -78,12 +78,6 @@ jobs:
         run: |
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ failure() }}
-        with:
-          limit-access-to-actor: false
-
       - name: Cancel Currents run if the workflow is cancelled
         if: steps.check_playwright.outputs.exists == 'true' && cancelled()
         uses: currents-dev/cancel-run-gh-action@v1
