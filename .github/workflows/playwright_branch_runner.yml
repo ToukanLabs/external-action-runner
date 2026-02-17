@@ -1,4 +1,4 @@
-name: Playwright runner
+name: Playwright Branch runner
 
 on:
   # This is triggered from a dispatch by the openeyes/openeyes repo
