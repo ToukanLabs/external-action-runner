@@ -24,6 +24,7 @@ env:
   GITHUB_RUN_ID: ${{ github.run_id }}
   GITHUB_RUN_NUMBER: ${{ github.run_number }}
   GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+  USE_TMATE: ${{ github.event.inputs.use_tmate }}
 
 run-name: Playwright - Branch ${{ github.event.inputs.branch }} - Attempt ${{ github.run_attempt }}
 
@@ -78,7 +79,12 @@ jobs:
         run: |
           echo "CURRENTS_RECORD_KEY=${{ secrets.CURRENTS_RECORD_KEY }}" >> protected/tests/.env
           echo "CURRENTS_PROJECT_ID=${{ secrets.CURRENTS_PROJECT_ID }}" >> protected/tests/.env
-          echo "TESTS_TO_RUN=PLAYWRIGHT_CLOUD_SHORT" >> protected/tests/.env
+          # handle boolean workflow input by evaluating the dispatch input directly
+          if [ "${{ github.event.inputs.use_tmate }}" = "true" ]; then
+            echo "TESTS_TO_RUN=PLAYWRIGHT_CLOUD_SHORT,WAIT_800" >> protected/tests/.env
+          else
+            echo "TESTS_TO_RUN=PLAYWRIGHT_CLOUD_SHORT" >> protected/tests/.env
+          fi
           echo "PUID=$(id -u)" >> protected/tests/.env
           echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
           echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
