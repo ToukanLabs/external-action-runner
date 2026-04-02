@@ -33,7 +33,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         # populate commit message for merge commits
         # see https://currents.dev/readme/ci-setup/github-actions
         with:
