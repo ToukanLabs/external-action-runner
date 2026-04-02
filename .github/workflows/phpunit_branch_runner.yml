@@ -9,8 +9,20 @@ on:
       additional-modules:
         description: 'Comma-separated list of additional modules to enable for this test run (optional)'
         required: false
+      use_tmate:
+        description: 'Set up a tmate session for debugging'
+        required: true
+        default: false
+        type: boolean
 
 env:
+  GITHUB_HEAD_REF: ${{ github.event.inputs.branch }}
+  GITHUB_REPOSITORY: openeyes/openeyes
+  GITHUB_RUN_ID: ${{ github.run_id }}
+  GITHUB_RUN_NUMBER: ${{ github.run_number }}
+  GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+  # GITHUB_BASE_REF: 'develop'
+  USE_TMATE: ${{ github.event.inputs.use_tmate }}
   ADDITIONAL_MODULES: ${{ github.event.inputs.additional-modules || '' }}
 
 
@@ -26,6 +38,13 @@ jobs:
         # run different test types in parallel
         test-type: [PHPUNIT-SAMPLE, PHPUNIT-FIXTURES]
     steps:
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.use_tmate == 'true' }}
+        with:
+          detached: true
+          limit-access-to-actor: false
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -39,17 +58,23 @@ jobs:
         with:
           repository: ${{ env.GITHUB_REPOSITORY }}
           ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ env.GITHUB_HEAD_REF }}
 
       # write environment variables to a docker compose .env file
       - name: Write variables to compose .env file
         run: |
-          echo "TESTS_TO_RUN=${{ matrix.test-type }}" >> protected/tests/.env
+          if [ "${{ github.event.inputs.use_tmate }}" = "true" ]; then
+            echo "TESTS_TO_RUN=${{ matrix.test-type }};WAIT_800" >> protected/tests/.env
+          else
+            echo "TESTS_TO_RUN=${{ matrix.test-type }}" >> protected/tests/.env
+          fi
           echo "PUID=$(id -u)" >> protected/tests/.env
           echo "SSH_PRIVATE_KEY='${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}'" >> protected/tests/.env
-          echo "BUILD_BRANCH=${{ github.event.inputs.branch }}" >> protected/tests/.env
-          echo "OE_DEFAULT_BRANCH=${{ env.GITHUB_BASE_REF }}" >> protected/tests/.env
+          echo "BUILD_BRANCH=${{ env.GITHUB_HEAD_REF }}" >> protected/tests/.env
           echo "BUILD_ID=${{ env.GITHUB_REPOSITORY }}-${{ env.GITHUB_RUN_ID }}-${{ env.GITHUB_RUN_ATTEMPT}}" >> protected/tests/.env
+          echo "OE_DEFAULT_BRANCH=${{ env.GITHUB_BASE_REF }}" >> protected/tests/.env
+          echo "LOG_TO_BROWSER='error, warning, notice, info'" >> protected/tests/.env
+          echo "OE_APP_LOG_LEVELS='error, warning, notice, info'" >> protected/tests/.env
           if [ -n "${{ env.ADDITIONAL_MODULES }}" ]; then
             echo "MODULES=${{ env.ADDITIONAL_MODULES }}" >> protected/tests/.env
           fi
