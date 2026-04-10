@@ -26,25 +26,7 @@ env:
 run-name: Playwright - PR ${{ github.event.client_payload.GITHUB_PULL_REQUEST }} - Attempt ${{ github.event.client_payload.GITHUB_RUN_ATTEMPT }} - Run id ${{ github.event.client_payload.GITHUB_RUN_ID }}
 
 jobs:
-  cancel-previous-runs:
-    name: Cancel Previous Runs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cancel existing run for this build
-        run: |
-          curl -X PUT https://api.currents.dev/v1/runs/cancel-ci/github \
-            -H "Authorization: Bearer ${{ secrets.CURRENTS_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "githubRunId": "${{ github.run_id }}",
-              "githubRunAttempt": ${{ github.run_attempt }},
-              "projectId": "${{ vars.CURRENTS_PROJECT_ID }}",
-              "ciBuildId": "${{ vars.CURRENTS_CI_BUILD_ID }}"
-            }'
-
   playwright-tests:
-    needs: cancel-previous-runs
-    if: ${{ always() }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
