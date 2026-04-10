@@ -5,6 +5,10 @@ on:
   repository_dispatch:
     types: [cypress_run*]
 
+concurrency:
+  group: cypress-${{ github.event.client_payload.GITHUB_PULL_REQUEST || github.event.client_payload.GITHUB_HEAD_REF }}
+  cancel-in-progress: true
+
 env:
   GITHUB_REF_NAME: ${{ github.event.client_payload.GITHUB_REF_NAME }}
   GITHUB_REF: ${{ github.event.client_payload.GITHUB_REF }}
