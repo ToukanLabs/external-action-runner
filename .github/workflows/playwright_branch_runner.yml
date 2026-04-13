@@ -17,6 +17,9 @@ on:
         default: false
         type: boolean
 
+concurrency:
+  group: playwright-branch-AMD64-${{ github.event.inputs.branch }}
+  cancel-in-progress: true
 
 env:
   GITHUB_HEAD_REF: ${{ github.event.inputs.branch }}
@@ -44,7 +47,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         # populate commit message for merge commits
         # see https://currents.dev/readme/ci-setup/github-actions
         with:
@@ -98,11 +101,3 @@ jobs:
         if: steps.check_playwright.outputs.exists == 'true'
         run: |
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
-
-      - name: Cancel Currents run if the workflow is cancelled
-        if: steps.check_playwright.outputs.exists == 'true' && cancelled()
-        uses: currents-dev/cancel-run-gh-action@v1
-        with:
-          api-token: ${{ secrets.CURRENTS_API_KEY }}
-          github-run-id: ${{ github.run_id }}
-          github-run-attempt: ${{ github.run_attempt }}
