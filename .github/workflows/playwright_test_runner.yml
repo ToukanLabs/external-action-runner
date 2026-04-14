@@ -84,39 +84,124 @@ jobs:
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
 
       - name: Cancel Currents.dev run if workflow was cancelled
-        if: steps.check_playwright.outputs.exists == 'true' && cancelled()
+        if: cancelled()
         env:
           CURRENTS_API_KEY: ${{ secrets.CURRENTS_API_KEY }}
+          CURRENTS_PROJECT_ID: ${{ secrets.CURRENTS_PROJECT_ID }}
           BUILD_ID: ${{ env.BUILD_ID }}
+          CURRENT_WORKFLOW_RUN_ID: ${{ github.run_id }}
+          CURRENT_WORKFLOW_RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           echo "Workflow was cancelled — cancelling Currents.dev runs for build ID: $BUILD_ID"
+          echo "Currents project ID: $CURRENTS_PROJECT_ID"
+          echo "Dispatch payload runId/attempt: $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          echo "Current workflow runId/attempt: $CURRENT_WORKFLOW_RUN_ID/$CURRENT_WORKFLOW_RUN_ATTEMPT"
 
-          # Fetch all runs (running + queued) matching this exact build ID
-          RUNS=$(curl -s \
-            -H "Authorization: Bearer $CURRENTS_API_KEY" \
-            "https://api.currents.dev/v1/runs?ciBuildId=$BUILD_ID")
+          compact_response() {
+            local response="$1"
+            echo "$response" | jq -c '{status, error, data: {runId: .data.runId, status: .data.status, completionState: .data.completionState, canceledAt: (.data.cancellation.canceledAt // .data.canceledAt)}}' 2>/dev/null || echo "$response"
+          }
 
-          echo "API response: $RUNS"
-          echo "$RUNS" | jq '.data[] | {runId: .runId, status: .status}'
-          
-          COUNT=$(echo "$RUNS" | jq '.data | length')
+          attempt_cancel_by_github() {
+            local run_id="$1"
+            local run_attempt="$2"
+            local label="$3"
 
-          if [[ "$COUNT" -eq 0 ]]; then
-            echo "No Currents.dev runs found for build ID: $BUILD_ID"
+            local payload
+            payload=$(jq -n \
+              --arg githubRunId "$run_id" \
+              --argjson githubRunAttempt "${run_attempt:-0}" \
+              --arg projectId "$CURRENTS_PROJECT_ID" \
+              --arg ciBuildId "$BUILD_ID" \
+              '{
+                githubRunId: $githubRunId,
+                githubRunAttempt: $githubRunAttempt,
+                projectId: $projectId,
+                ciBuildId: $ciBuildId
+              }')
+
+            echo "Attempting cancel by $label GitHub metadata (runId=$run_id, attempt=$run_attempt)..."
+
+            local response
+            response=$(curl -s -X PUT \
+              -H "Authorization: Bearer $CURRENTS_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "$payload" \
+              "https://api.currents.dev/v1/runs/cancel-ci/github")
+
+            echo "Cancel-by-GitHub ($label) response: $(compact_response "$response")"
+
+            if echo "$response" | jq -e '.status == "OK"' > /dev/null 2>&1; then
+              local cancelled_run_id
+              cancelled_run_id=$(echo "$response" | jq -r '.data.runId // "unknown"')
+              echo "Successfully cancelled run via $label GitHub metadata. Run ID: $cancelled_run_id"
+              return 0
+            fi
+
+            return 1
+          }
+
+          # First attempt: cancel directly by dispatch payload GitHub metadata.
+          if attempt_cancel_by_github "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "dispatch payload"; then
             exit 0
           fi
 
-          echo "Found $COUNT Currents.dev run(s) to cancel"
+          # Second attempt: use this workflow's GitHub metadata only if it differs.
+          if [[ "$CURRENT_WORKFLOW_RUN_ID" != "$GITHUB_RUN_ID" || "$CURRENT_WORKFLOW_RUN_ATTEMPT" != "$GITHUB_RUN_ATTEMPT" ]]; then
+            if attempt_cancel_by_github "$CURRENT_WORKFLOW_RUN_ID" "$CURRENT_WORKFLOW_RUN_ATTEMPT" "current workflow"; then
+              exit 0
+            fi
+          else
+            echo "Skipping second GitHub metadata cancel attempt because IDs and attempts are identical."
+          fi
 
-          echo "$RUNS" | jq -c '.data[]' | while read -r run; do
-            RUN_ID=$(echo "$run" | jq -r '.runId')
-            STATUS=$(echo "$run" | jq -r '.status')
+          echo "Cancel-by-GitHub attempts failed or did not find a run. Falling back to /runs/find by projectId + ciBuildId..."
 
-            echo "Cancelling run: $RUN_ID (status: $STATUS)"
+          # Fallback: locate run by project + build ID, then cancel by run ID.
+          ENCODED_BUILD_ID=$(jq -rn --arg value "$BUILD_ID" '$value|@uri')
+          ENCODED_PROJECT_ID=$(jq -rn --arg value "$CURRENTS_PROJECT_ID" '$value|@uri')
+          RUN=$(curl -s \
+            -H "Authorization: Bearer $CURRENTS_API_KEY" \
+            "https://api.currents.dev/v1/runs/find?projectId=$ENCODED_PROJECT_ID&ciBuildId=$ENCODED_BUILD_ID")
 
-            curl -s -X PUT \
-              -H "Authorization: Bearer $CURRENTS_API_KEY" \
-              "https://api.currents.dev/v1/runs/$RUN_ID/cancel" > /dev/null
-          done
+          echo "Runs find response: $(compact_response "$RUN")"
+          if ! echo "$RUN" | jq -e . > /dev/null 2>&1; then
+            echo "Currents.dev API returned non-JSON response. Skipping cancellation."
+            exit 0
+          fi
 
-          echo "All matching Currents.dev runs cancelled."
+          if ! echo "$RUN" | jq -e '.status == "OK" and (.data.runId | type == "string")' > /dev/null 2>&1; then
+            echo "No run found via /runs/find. Nothing to cancel."
+            exit 0
+          fi
+
+          RUN_ID=$(echo "$RUN" | jq -r '.data.runId')
+          RUN_STATUS=$(echo "$RUN" | jq -r '.data.status // "unknown"')
+          RUN_COMPLETION_STATE=$(echo "$RUN" | jq -r '.data.completionState // "unknown"')
+          RUN_CANCELLED_AT=$(echo "$RUN" | jq -r '.data.cancellation.canceledAt // empty')
+
+          if [[ "$RUN_COMPLETION_STATE" == "CANCELED" || "$RUN_COMPLETION_STATE" == "CANCELLED" || "$RUN_STATUS" == "CANCELED" || "$RUN_STATUS" == "CANCELLED" || -n "$RUN_CANCELLED_AT" ]]; then
+            echo "Run already cancelled ($RUN_ID, status=$RUN_STATUS, completionState=$RUN_COMPLETION_STATE)."
+            exit 0
+          fi
+
+          echo "Cancelling run from /runs/find: $RUN_ID (status=$RUN_STATUS, completionState=$RUN_COMPLETION_STATE)"
+
+          CANCEL_RESPONSE=$(curl -s -X PUT \
+            -H "Authorization: Bearer $CURRENTS_API_KEY" \
+            "https://api.currents.dev/v1/runs/$RUN_ID/cancel")
+
+          echo "Cancel response for $RUN_ID: $(compact_response "$CANCEL_RESPONSE")"
+
+          if echo "$CANCEL_RESPONSE" | jq -e '.status == "OK"' > /dev/null 2>&1; then
+            echo "Run $RUN_ID cancelled successfully."
+            exit 0
+          fi
+
+          if echo "$CANCEL_RESPONSE" | jq -e '((.error | type == "string") and (.error | test("Run is cancelled"; "i"))) or ((.error | type == "array") and any(.error[]; test("Run is cancelled"; "i")))' > /dev/null 2>&1; then
+            echo "Run $RUN_ID was already cancelled."
+            exit 0
+          fi
+
+          echo "Could not cancel run $RUN_ID."
+          exit 0
