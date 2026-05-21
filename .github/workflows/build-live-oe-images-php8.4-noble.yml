@@ -56,18 +56,21 @@ jobs:
             modules: 'OEExceptionHandler=\OEModule\OEExceptionHandler\OEExceptionHandlerModule'
             php-version: "8.4"
             os-version: "noble"
+            node_version: "24"
             primary: true
             experimental: false
           - client-suffix: 'meh'
             modules: 'mehstaffdb,OphLeEpatientletter,OphInMehPac,OEExceptionHandler=\OEModule\OEExceptionHandler\OEExceptionHandlerModule'
             php-version: "8.4"
             os-version: "noble"
+            node_version: "24"
             primary: false
             experimental: false
           - client-suffix: 'newmedica'
             modules: 'NewMedica,OEExceptionHandler=\OEModule\OEExceptionHandler\OEExceptionHandlerModule'
             php-version: "8.4"
             os-version: "noble"
+            node_version: "24"
             primary: false
             experimental: false
           
@@ -113,6 +116,7 @@ jobs:
           PHP_VERSION: ${{ matrix.php-version }}
           OS_VERSION: ${{ matrix.os-version }}
           IMAGE_SUFFIX: ${{ env.IMAGE_SUFFIX }}
+          NODE_MAJOR_VERSION: ${{ matrix.node_version }}
           PRIMARY_PHP_VERSION: ${{ env.PRIMARY_PHP_VERSION }}
           GITHUB_REF_SLUG: ${{ env.GITHUB_REF_SLUG }}
 
@@ -183,6 +187,7 @@ jobs:
           build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
+            NODE_MAJOR_VERSION=${{ matrix.node_version }}
             PHP_VERSION=${{ matrix.php-version }}
             OS_VERSION=${{ matrix.os-version }}
             OE_VERSION=${{ steps.meta-live.outputs.slug }}${{ env.IMAGE_SUFFIX }}
