@@ -1,7 +1,7 @@
 name: Sample DB - Build image
 
 # This workflow builds the sample database images for OpenEyes, supporting multiple architectures.
-# It is triggered by a repository dispatch event from the openeyes/openeyes repository.
+# It is triggered by a repository dispatch event from the toukanlabs/openeyes-sample-data repository.
 # The workflow builds images for both Intel and ARM architectures, using different database versions.
 # It also creates and pushes multi-arch manifests for the built images.
 # Finally, it updates the Docker Hub description for the images.
@@ -9,7 +9,7 @@ name: Sample DB - Build image
 # Note that separate builds are needed for arm and intel architectures due to the way GHA Qemu emulation works for database images.
 
 on:
-  # This is triggered from a dispatch by the openeyes/openeyes repo
+  # This is triggered from a dispatch by the toukanlabs/openeyes-sample-data repo
   repository_dispatch:
     types: [build-oe-sample-db_*]
   workflow_dispatch:
@@ -21,7 +21,7 @@ env:
   # The next 2 come from the dispatch action, which uses rlespinasse/github-slug-action to generate the refs
   GITHUB_REF_SLUG: ${{ github.event.client_payload.message.GITHUB_REF_SLUG }}
   GITHUB_REF_NAME: ${{ github.event.client_payload.message.GITHUB_REF_NAME }}
-  REPOSITORY: openeyes/sample
+  REPOSITORY: toukanlabs/openeyes-sample-data
 
 jobs:
   build-and-push:
@@ -77,13 +77,13 @@ jobs:
           ssh-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Setup Docker metadata tags (arch-specific)
         id: meta
@@ -100,7 +100,7 @@ jobs:
           docker-pass: ${{ secrets.DOCKER_PAT }}
 
       - name: Build image for ${{ matrix.platform }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           load: true
@@ -142,7 +142,7 @@ jobs:
 
     steps:
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
