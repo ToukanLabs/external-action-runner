@@ -32,21 +32,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # mariadb 10.11 (primary)
-          - db-image: "mariadb"
-            db-image-version: "10.11"
-            primary: false
-            runner: ubuntu-latest
-            arch: amd64
-            platform: linux/amd64
-          - db-image: "mariadb"
-            db-image-version: "10.11"
-            primary: false
-            runner: ubuntu-24.04-arm
-            arch: arm64
-            platform: linux/arm64
+          # mariadb 10.11
+          # - db-image: "mariadb"
+          #   db-image-version: "10.11"
+          #   primary: false
+          #   runner: ubuntu-latest
+          #   arch: amd64
+          #   platform: linux/amd64
+          # - db-image: "mariadb"
+          #   db-image-version: "10.11"
+          #   primary: false
+          #   runner: ubuntu-24.04-arm
+          #   arch: arm64
+          #   platform: linux/arm64
 
-          # mariadb 11.8
+          # mariadb 11.8 (primary)
           - db-image: "mariadb"
             db-image-version: "11.8"
             primary: true
