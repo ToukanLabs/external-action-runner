@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        containers: [1, 2]
+        containers: [1, 2, 3]
     steps:
       - name: Log in to Docker Hub
         uses: docker/login-action@v4
