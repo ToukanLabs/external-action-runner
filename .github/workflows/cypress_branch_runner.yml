@@ -64,9 +64,9 @@ jobs:
           echo "OE_APP_LOG_LEVELS='error, warning, notice, info'" >> protected/tests/.env
 
 
+      - name: Pull docker images
+        run: docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
+
       - name: Run docker
         run: |
-          echo "::group::Pull docker images"
-          docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
-          echo "::endgroup::"
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web

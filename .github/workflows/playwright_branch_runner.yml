@@ -97,10 +97,11 @@ jobs:
           echo "LOG_TO_BROWSER='error, warning, notice, info'" >> protected/tests/.env
           echo "OE_APP_LOG_LEVELS='error, warning, notice, info'" >> protected/tests/.env
 
+      - name: Pull docker images
+        if: steps.check_playwright.outputs.exists == 'true'
+        run: docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
+
       - name: Run docker
         if: steps.check_playwright.outputs.exists == 'true'
         run: |
-          echo "::group::Pull docker images"
-          docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
-          echo "::endgroup::"
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web

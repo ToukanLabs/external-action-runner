@@ -52,11 +52,11 @@ jobs:
           echo "CYPRESS_FAIL_FAST_VALUE=${{ github.event.inputs.auto-cancel-after-failures }}" >> protected/tests/.env
           echo "LOG_TO_BROWSER='error, warning, notice, info, debug'" >> protected/tests/.env
 
+      - name: Pull docker images
+        run: docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
+
       - name: Run docker (build only)
         run: |
-          echo "::group::Pull docker images"
-          docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
-          echo "::endgroup::"
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
           # give container a short moment to fully shut down and flush files
           sleep 5
@@ -146,11 +146,11 @@ jobs:
           echo "OE_APP_LOG_LEVELS='error, warning, notice, info, profile, trace'" >> protected/tests/.env
 
 
+      - name: Pull docker images
+        run: docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
+
       - name: Run docker
         run: |
-          echo "::group::Pull docker images"
-          docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
-          echo "::endgroup::"
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
 
       - name: Cancel Currents run if the workflow is cancelled

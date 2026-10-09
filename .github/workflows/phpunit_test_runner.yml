@@ -56,9 +56,9 @@ jobs:
             echo "MODULES=${{ env.ADDITIONAL_MODULES }}" >> protected/tests/.env
           fi
 
+      - name: Pull docker images
+        run: docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
+
       - name: Run docker
         run: |
-          echo "::group::Pull docker images"
-          docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
-          echo "::endgroup::"
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
