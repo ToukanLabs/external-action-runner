@@ -81,6 +81,9 @@ jobs:
       - name: Run docker
         if: steps.check_playwright.outputs.exists == 'true'
         run: |
+          echo "::group::Pull docker images"
+          docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env pull
+          echo "::endgroup::"
           docker compose -f protected/tests/docker-compose.yml --env-file protected/tests/.env run --use-aliases web
 
       - name: Cancel Currents.dev run if workflow was cancelled
