@@ -90,6 +90,31 @@ jobs:
         with:
             ssh-private-key: ${{ secrets.TKL_DEPLOY_PRIVATE_KEY }}
 
+      # arm64 needs puppeteer 25.6+ in OpenEyes' package.json: older puppeteer downloads an x86-64
+      # Chrome on arm64, and the Web-Live build fails. 26.0.x (LTS) stays on puppeteer 24, so it
+      # builds amd64 only. If the check cannot run, build amd64 only so amd64 pushes are never blocked.
+      - name: Choose platforms
+        id: platforms
+        shell: bash
+        run: |
+          platforms="linux/amd64"
+          oe_dir=$(mktemp -d)
+          if git clone -q --depth 1 --no-checkout --filter=blob:none --branch "$GITHUB_REF_NAME" git@github.com:openeyes/openeyes.git "$oe_dir" \
+            && range=$(git -C "$oe_dir" show HEAD:package.json | jq -r '.dependencies.puppeteer // empty') \
+            && [ -n "$range" ] \
+            && pup=$(npm view "puppeteer@$range" version --json | jq -r 'if type == "array" then .[] else . end' | sort -V | tail -1) \
+            && [ -n "$pup" ]; then
+            if [ "$(printf '%s\n' 25.6.0 "$pup" | sort -V | head -1)" = "25.6.0" ]; then
+              platforms="linux/amd64,linux/arm64"
+            fi
+            echo "OpenEyes $GITHUB_REF_NAME puppeteer '$range' resolves to $pup"
+          else
+            echo "::warning::Could not read the puppeteer version for $GITHUB_REF_NAME - building amd64 only"
+          fi
+          rm -rf "$oe_dir"
+          echo "Building for: $platforms"
+          echo "platforms=$platforms" >> "$GITHUB_OUTPUT"
+
       - name: Setup image suffix
         id: setsuffix
         shell: bash
@@ -182,8 +207,7 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Live
           push: true
-          platforms: linux/amd64
-          #,linux/arm64 - arm builds temporarily suspended to save build minutes (until we actually start using ARM)
+          platforms: ${{ steps.platforms.outputs.platforms }}
           build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
@@ -204,8 +228,7 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Manager
           push: true
-          platforms: linux/amd64
-          #,linux/arm64 - arm builds temporarily suspended to save build minutes (until we actually start using ARM)
+          platforms: ${{ steps.platforms.outputs.platforms }}
           build-args: |
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             MODULES=${{ matrix.modules }}
@@ -226,8 +249,7 @@ jobs:
               default=${{ env.SSH_AUTH_SOCK }}
           context: ./Web-Dev
           push: true
-          platforms: linux/amd64
-          #,linux/arm64 - arm builds temporarily suspended to save build minutes (until we actually start using ARM)
+          platforms: ${{ steps.platforms.outputs.platforms }}
           build-args: |-
             BUILD_BRANCH=${{ env.GITHUB_REF_NAME }}
             BASE_IMAGE_NAME=${{ env.DOCKER_ORG }}/${{ env.DOCKER_WEB_IMAGE }}
