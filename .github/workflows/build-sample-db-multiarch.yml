@@ -46,16 +46,16 @@ jobs:
           #   arch: arm64
           #   platform: linux/arm64
 
-          # mariadb 11.8 (primary)
+          # mariadb 11.8 (not primary, so no un-prefixed tags are pushed)
           - db-image: "mariadb"
             db-image-version: "11.8"
-            primary: true
+            primary: false
             runner: ubuntu-latest
             arch: amd64
             platform: linux/amd64
           - db-image: "mariadb"
             db-image-version: "11.8"
-            primary: true
+            primary: false
             runner: ubuntu-24.04-arm
             arch: arm64
             platform: linux/arm64
@@ -130,9 +130,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - db-image: "mariadb"
-            db-image-version: "10.11"
-            primary: true
+          # mariadb 10.11 is no longer built
+          # - db-image: "mariadb"
+          #   db-image-version: "10.11"
+          #   primary: true
           # - db-image: "mysql"
           #   db-image-version: "8.0"
           #   primary: false
